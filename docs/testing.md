@@ -8,10 +8,11 @@ candidate record and comparison log are in
 `.build/update-checks/20260908T111527.423218Z/`. These are maintenance-tool
 results and do not establish browser runtime behavior.
 
-Status as of 2026-09-08: Phase 1 is compiling pinned upstream Chromium stable
-152.0.7977.82. There has been no successful browser build and no successful
-browser test. The browser protocols below are pending procedures; observed
-standalone results are recorded separately.
+Status as of 2026-09-08: the unmodified Chromium 152.0.7977.82 build and actual
+Xorg baseline gate passed. See [the dated review](upstream-baseline-2026-09-08.md)
+for navigation, tab operations, docked DevTools, sandbox and clean shutdown
+observations, as well as the failed first attempt and remaining limits. Product
+integration and broader capability acceptance remain pending.
 
 ## Phase 1 baseline gate
 
@@ -28,6 +29,10 @@ baseline.
 
 `mb/tools/upstream_smoke.py --build-receipt PATH` automates the scoped launch,
 navigation/tab assertions, kernel sandbox checks, screenshots and shutdown.
+It opens direct test URLs via Alt+Enter, avoiding stock remote NTP UI; Ctrl+T
+remains a product verification item. Base64 HTML avoids the recorded upstream
+percent-encoded data-URL debug assertion. DevTools uses Ctrl+Shift+I with time
+for its first frontend load; F12 is a separate pending check.
 It uses the caller's `DISPLAY`; confirm this is the actual Xorg session, not a
 virtual or unintended display. Its successful result still requires a dated
 `results.md` in the evidence directory recording visual review of navigation,
@@ -217,16 +222,19 @@ them to confirm the stated UI.
    executable path, command line, and profile path correspond to this build and
    `TEST_DATA`. Capture `03-version.png`.
 2. Navigate to
-   `data:text/html,<title>MB%20baseline</title><h1>Navigation%20works</h1>`.
+   `data:text/html;base64,PHRpdGxlPkJhc2VsaW5lIG9uZTwvdGl0bGU+PGgxPk5hdmlnYXRpb24gd29ya3M8L2gxPg==`.
    Confirm the heading renders and capture `04-navigation.png`.
-3. Press `Ctrl+T`; confirm a new tab appears. Navigate it to `about:blank`, press
+3. Enter `about:blank` in the omnibox and press `Alt+Enter`; confirm a new tab
+   appears with that local page. Stock regular NTP can fetch remote executable
+   UI, so defer `Ctrl+T` until the product local NTP exists. Press
    `Ctrl+Tab` and `Ctrl+Shift+Tab`, and confirm selection moves between the two
    tabs. Close only the selected test tab with `Ctrl+W`. Capture
    `05-tabs.png` before closing and record titles after each switch.
-4. Press `F12` in the test window. Confirm DevTools opens for the test page and
+4. Press `Ctrl+Shift+I` in the test window and allow its initial frontend to
+   load. Confirm DevTools opens for the test page and
    that Elements, Console, Sources, Network, and Application panels are present
    and selectable. Confirm docking controls respond, without changing the
-   user's global browser. Capture `06-devtools.png`, then press `F12` again and
+   user's global browser. Capture `06-devtools.png`, then press `Ctrl+Shift+I` again and
    confirm it closes.
 
 Use this pattern for each address and key; substitute the requested value and

@@ -1,0 +1,103 @@
+# Product-owned C++ targets. Chromium integration wires these source sets into
+# browser and test executables separately.
+
+import("//mb/generated/branding/branding.gni")
+import("//testing/test.gni")
+import("//tools/grit/grit_rule.gni")
+
+# Alias the final Chromium allocation, after resource counting. The standalone
+# branding-strings/first_ids.py fixture uses specification seeds, not build IDs.
+action("branding_resource_ids") {
+  script = "tools/grit_resource_ids.py"
+  inputs = [ grit_resource_id_file ]
+  deps = [ grit_resource_id_target ]
+  outputs = [
+    "$target_gen_dir/branding_resource_ids",
+    "$target_gen_dir/branding_resource_ids.json",
+  ]
+  args = [
+    "--input",
+    rebase_path(grit_resource_id_file, root_build_dir),
+    "--source-root",
+    rebase_path("//", root_build_dir),
+    "--output",
+    rebase_path(outputs[0], root_build_dir),
+    "--receipt",
+    rebase_path(outputs[1], root_build_dir),
+  ]
+}
+
+config("branding_config") {
+  # control_main.cc currently includes the generated header by its short name.
+  include_dirs = [ "//mb/generated/branding" ]
+}
+
+config("toml_no_exceptions") {
+  defines = [ "TOML_EXCEPTIONS=0" ]
+}
+
+source_set("branding") {
+  public = [ "generated/branding/branding.h" ]
+}
+
+source_set("product_core") {
+  sources = [
+    "app/startup_arguments.cc",
+    "app/startup_arguments.h",
+    "browser/environment_paths.cc",
+    "browser/environment_paths.h",
+    "config/config.cc",
+    "config/config.h",
+    "config/config_file.cc",
+    "config/config_file.h",
+    "config/runtime_config.cc",
+    "config/runtime_config.h",
+  ]
+
+  public = [
+    "app/startup_arguments.h",
+    "browser/environment_paths.h",
+    "config/config.h",
+    "config/config_file.h",
+    "config/runtime_config.h",
+  ]
+
+  # Chromium's default compiler configuration already disables exceptions and
+  # RTTI. This additionally selects toml++'s explicit parse-result API.
+  configs += [ ":toml_no_exceptions" ]
+}
+
+source_set("control_main") {
+  sources = [ "app/control_main.cc" ]
+  configs += [ ":branding_config" ]
+  deps = [
+    ":branding",
+    ":product_core",
+  ]
+}
+
+executable("mb_control") {
+  output_name = branding_executable_name + "ctl"
+  deps = [ ":control_main" ]
+}
+
+source_set("unit_tests") {
+  testonly = true
+  sources = [
+    "test/config_test.cc",
+    "test/environment_paths_test.cc",
+    "test/runtime_config_test.cc",
+    "test/startup_arguments_test.cc",
+  ]
+  deps = [
+    ":product_core",
+    "//testing/gtest",
+  ]
+}
+
+test("mb_unit_tests") {
+  deps = [
+    ":unit_tests",
+    "//base/test:run_all_unittests",
+  ]
+}

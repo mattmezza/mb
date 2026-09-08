@@ -37,6 +37,13 @@ manifest validation diagnostic names both the manifest path and the rejected key
 replacement for the actual `IDS_PRODUCT_NAME` resource wiring, which remains
 pending a separate generated-GRD integration.
 
-This tooling does not patch Chromium, configure a browser target, rename an
-executable, or establish that a Chromium build has passed. It is intentionally
-separate until the unmodified Chromium baseline build and test gate succeeds.
+`product.py prepare` now stages these generated inputs under `//mb/generated`
+and applies the reviewed native integration patch. The first preparation requires
+a passed, visually reviewed upstream baseline. See [product integration](product-integration.md)
+for exact commands and the patch boundary. GN generation has passed; compiled
+product identity and the renamed browser launch remain pending.
+
+The executable string macro is defined in the generated header rather than an
+exported compiler definition, so unrelated browser translation units retain their
+existing compiler command lines. The auxiliary GRDP remains separate; actual
+Chromium branded-string targets consume the generated GRDs and preserved IDs.

@@ -1,8 +1,9 @@
 # Updating the Chromium baseline
 
-Status: the initial pinned checkout, dependency synchronization, hooks and GN
-generation have been exercised. Its first browser build is still running.
-Product integration and a complete update rehearsal remain pending. This document
+Status: the initial pinned Chromium build and sandboxed Xorg baseline passed.
+Product overlay application, GN generation and focused product tests work; the
+renamed browser is compiling. A complete upstream-update and package rehearsal
+remains pending. This document
 defines the maintenance procedure; it does not establish release acceptance.
 
 ## Version and source authority
@@ -86,16 +87,17 @@ between old and new versions.
    product integration in small compiled steps. Run the standalone tests,
    focused browser tests and environment/incognito/capability checks. Complete
    a release build and installed Arch-package smoke test before changing the
-   supported version. The integration and package commands will be recorded
-   here when implemented and exercised.
+   supported version. Use `product.py prepare`, `gen`, `test`, and `build` as documented in
+   [product integration](product-integration.md). Packaging commands remain pending.
 
 ## Reviewing integration conflicts
 
 Product code belongs under `//mb/`; changes to upstream files must have an
-enumerated purpose and an integration record. The initial integration has not
-yet been applied, so there is no verified patch series or automated rebase
-command to run. Do not imply that a successful standalone test ports the browser
-integration.
+enumerated purpose and an integration record. The initial branding patch is
+`mb/patches/0001-product-branding.patch`, applied by the guarded product workflow.
+It has passed GN and focused product tests; its browser build is still underway.
+There is no unattended rebase command. A passing standalone test does not prove
+that the browser integration has been ported.
 
 For each affected upstream file, compare the old and candidate versions before
 reapplying the product change. Identify renamed classes, moved initialization

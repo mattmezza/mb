@@ -7,7 +7,7 @@
 - Add dependency preflight and guarded source-fetch tooling.
 - Verify installed Arch dependencies and fetch the pinned upstream checkout.
 - Add logged upstream hook/generation/build stages and a scoped X11 test protocol.
-- Complete pinned dependency sync, hooks, and GN generation; upstream build is running.
+- Complete pinned dependency sync, hooks, GN generation and unmodified upstream build.
 - Add centralized branding and tested C++/GN/resource/desktop metadata generation.
 - Prepare a build-receipt-bound X11 smoke driver using a fresh isolated test root.
 - Add a compiled, tested argument normalizer for the future early startup hook.
@@ -25,6 +25,8 @@
   selection, all-environment auditing and no directory creation.
 - Add a logged focused-test runner; all 107 standalone tests pass using the
   pinned Python interpreter, including fresh product C++ builds.
-- Browser integration remains gated on the successful upstream build and launch.
+- Pass the actual Xorg upstream baseline with reviewed rendering, tabs, docked
+  DevTools, namespace/Seccomp sandbox and clean shutdown. Preserve the first
+  data-URL debug assertion failure in the dated review; begin Phase 2 integration.
 - Add a read-only stable-release candidate checker and document the upstream
   update procedure, packaging payload requirements and real-credits build gate.

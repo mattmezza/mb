@@ -2,9 +2,13 @@
 
 Updated: 2026-09-08.
 
-- Current phase: Phase 1, unmodified Chromium baseline compilation.
-- Last successful browser build: none.
-- Last successful browser test: none. All twenty browser acceptance criteria remain open.
+- Current phase: Phase 2, product branding integration.
+- Last successful browser build: unmodified Chromium 152.0.7977.82, 2026-09-08 18:05 UTC.
+  Receipt: `.build/logs/upstream-build-20260908T112027.558220Z.json`.
+- Last successful browser test: actual Xorg baseline passed on 2026-09-08.
+  Evidence: `.build/test-evidence/upstream-20260908T181043.265925Z/review.json`
+  and `results.md`; navigation, tabs, docked DevTools, sandbox and clean exit observed.
+  Product acceptance criteria remain open.
 - Last successful product test: all 107 standalone tests passed with pinned Python
   on 2026-09-08. Command: `.build/depot_tools/python-bin/python3 mb/tools/test_product.py`.
   Receipt and per-command logs: `.build/test-evidence/standalone-20260908T100704.408098Z/results.json`.
@@ -17,24 +21,23 @@ Updated: 2026-09-08.
 - Blockers: none currently. Dependencies, including user-installed gperf, are verified.
 - Repository: reviewed preparation is pushed to `https://github.com/mattmezza/mb`
   on `main`. Source, binaries, logs and test data remain under ignored `.build/`.
-- Chromium modifications: none. Product integration is gated on successful
-  unmodified compilation and an observed sandboxed launch on the actual Xorg session.
+- Chromium modifications: Phase 2 narrow branding patches are now being authored,
+  following the successful unmodified build and reviewed sandboxed Xorg launch.
 
-## Active build
+## Successful upstream build
 
 ```sh
 python3 mb/tools/upstream.py build --jobs 12
 ```
 
-This command is already running; inspect its log before starting another build:
+This command finished successfully; retained log:
 `.build/logs/upstream-build-20260908T112027.558220Z.log`.
 It runs pinned `autoninja -C out/mb-debug -j 12 chrome` from `.build/chromium/src`.
-The successful receipt will be written beside the log and include the binary hash.
+The successful receipt is beside the log and includes the binary hash.
 
-Checkpoint 2026-09-08 12:37 UTC: the twelve-job run has completed
-more than 3,000 actions and is compiling Blink core. The active log has no
-compiler failure markers. Source remains unmodified; no browser binary has
-completed its build or launch gate.
+Final twelve-job run: 6h45m16s, 26,086 completed steps, build succeeded.
+Earlier intentionally interrupted runs retained their completed outputs.
+Full review and prior smoke failures: [baseline record](docs/upstream-baseline-2026-09-08.md).
 
 Pinned Linux stable: Chromium 152.0.7977.82,
 `d04cdb24d67b081f6cf80200ffc5233f44b61109`. Source and all 165 Git dependencies
@@ -55,13 +58,10 @@ more actions in 14m08s, with zero compiler failures, before the final increase t
 twelve jobs. Its intentional-interruption receipt is
 `upstream-build-20260908T110604.504034Z.json`. Completed outputs were preserved.
 
-Latest resource check: approximately 98.8 GiB free disk, 7 GiB available RAM,
-25 GiB unused swap, low memory pressure. Total RAM is 30.8 GiB and total swap
-47 GiB. The laptop is on AC power; CPU policy caps performance cores at 2 GHz.
-The requested 100 GiB free-space warning threshold has been crossed during
-compilation; the user was informed. Capacity is not currently blocking this
-already-fetched build. Use `.build/tmp` for build scratch and continue monitoring.
-Recheck resources before each milestone, especially a second release output.
+Latest resource check after build: approximately 85 GiB free disk, 15 GiB
+available RAM and 26 GiB unused swap. Total RAM is 30.8 GiB and total swap 47 GiB.
+The requested 100 GiB disk warning was reported. Capacity permits incremental
+development; recheck before a separate release output. A focused product test build is running; see below.
 
 ## Prepared and tested outside Chromium
 
@@ -77,7 +77,7 @@ Recheck resources before each milestone, especially a second release output.
 - An unrelated root-level `test/pages/README.md` appeared during work; its
   provenance is unconfirmed. It is preserved and excluded from product commits.
 - PID-scoped Xorg smoke driver with executable, process-title and kernel sandbox
-  checks. It has not launched a browser; screenshots require explicit visual review.
+  checks. Baseline passed with explicit screenshot review; broader capability checks remain.
 - Read-only stable candidate checker and upstream update procedure. Packaging
   must generate real credits and explicitly build/install the sandbox helper;
   those product integrations and the release/package rehearsal remain pending.
@@ -85,16 +85,60 @@ Recheck resources before each milestone, especially a second release output.
 See [testing](docs/testing.md) for individual checks and
 [known limitations](docs/known-limitations.md) for remaining capability limits.
 
-## Exact next work
+## Active Phase 2 work and exact continuation
 
-After the active compile succeeds, verify the successful receipt and run:
+Product overlay and generated identity are staged. GN generation with
+`--fail-on-unused-args` and `gn check out/mb-debug '//mb:*'` passed.
+Product test build passed:
+`.build/logs/product-test-build-20260908T182621.251698Z.json`.
+All 51 GN-built C++ tests passed; evidence:
+`.build/test-evidence/product-unit-20260908T182711.363809Z/`.
+All 17 companion end-to-end tests passed against the GN-built executable.
+Eight overlay tests and fifteen branding tests also passed.
+
+The resource-ID fix is implemented and tested: generated GRDs alias the
+GN-resolved allocation. Five resolver tests include identical upstream/derived
+headers with the actual map. Preparation, GN generation and the reproducible
+51-C++/17-companion test wrapper passed. The renamed browser build is running:
+`.build/logs/product-build-20260908T184734.627427Z.log`.
+Unified build session: 60192. Do not start a concurrent build.
+
+Reproduction commands:
 
 ```sh
-python3 mb/tools/upstream_smoke.py --build-receipt .build/logs/upstream-build-20260908T112027.558220Z.json
+python3 mb/tools/product.py prepare
+python3 mb/tools/product.py gen
+python3 mb/tools/product.py test --jobs 12
+python3 mb/tools/product.py build --jobs 12
 ```
 
-Inspect the resulting screenshots and record navigation, DevTools, browser-reported
-sandbox state and clean shutdown in that run's `results.md`. Only then integrate
-product branding and compile/launch the renamed browser. Continue with native
-vertical tabs, configuration/environments, capability verification, release build,
-Arch packaging and update documentation following [the written plan](docs/implementation-plan.md).
+Last failed run: `.build/logs/product-build-20260908T183317.833680Z.log`,
+1,103 completed actions and 1,404 pending. Completed outputs are retained. It builds `chrome` (output executable derived from the manifest) and
+`chrome_sandbox`, incrementally reusing `out/mb-debug`. Product generation receipt:
+`.build/logs/product-gen-20260908T182003.628827Z.json`.
+
+Next: review the browser build receipt and run a scoped sandboxed Xorg smoke
+against the renamed binary. Then native vertical tabs, local-only new-tab UI,
+configuration/environments, capability verification, release and Arch packaging.
+
+Integration fixes: product buffer accesses use bounded containers; the C runtime
+argv array has one documented span conversion. The vendored toml++ header has a
+scoped unsafe-buffer diagnostic exception; parser limits and runtime hardening
+remain enabled. No sandbox, certificate, origin or site-isolation protection was disabled.
+
+Known upstream issue: percent-encoded data-URL typing triggered a debug omnibox
+sanitization DCHECK. Base64 fixtures passed; the defect remains recorded for
+regression work. F12 and Ctrl+T have not yet passed verification; the baseline
+used Ctrl+Shift+I and direct URL new-tab creation with Alt+Enter.
+
+The overlay review also fixed two maintenance cases: retiring an upstream patch
+restores the pinned source file; retiring generated output archives only owned
+files. Verification now detects deletion of a root product source or patch.
+The product smoke wrapper is prepared and unit-tested but has not run. After
+all tool changes are staged, use a fresh successful build receipt for its check.
+
+Latest GN/test receipts: `product-gen-20260908T184710.256676Z.json` and
+`product-test-build-20260908T184721.835515Z.json` under `.build/logs/`.
+Reproducible test evidence: `.build/test-evidence/product-unit-20260908T184731.229729Z/`.
+Real credits include toml++. The current browser build already generated the
+resolved ID aliases successfully; locale repacking and final linking are pending.

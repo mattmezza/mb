@@ -162,7 +162,9 @@ def prepare(manifest_path, source):
     mapping = {"SRCDIR": "."}
     for relative in SOURCES:
         if relative.endswith(".grd"):
-            # Preserve the pinned allocation and any future size constraints.
+            # Preserve pinned seed values for standalone fixture equivalence.
+            # Production GN must use the resolved default_resource_ids allocation;
+            # seed offsets can move when Chromium counts all resource families.
             mapping[Path(relative).name] = spec[relative]
     outputs["first_ids.py"] = repr(mapping) + "\n"
     receipt = {

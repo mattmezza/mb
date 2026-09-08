@@ -1,7 +1,9 @@
 // Companion configuration command. No browser process or daemon is started.
 #include <cstdlib>
 #include <iostream>
+#include <span>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "branding.h"
@@ -12,7 +14,7 @@
 namespace {
 
 std::string SafeDiagnostic(const std::string& text) {
-  constexpr char digits[] = "0123456789abcdef";
+  constexpr std::string_view digits = "0123456789abcdef";
   std::string safe;
   auto escape = [&](unsigned char ch) {
     safe += "\\x";
@@ -85,9 +87,16 @@ void Usage() {
 }  // namespace
 
 int main(int argc, char** argv) {
+  if (argc < 0 || !argv)
+    return Error("command line: invalid runtime argument vector");
+  // SAFETY: the C runtime supplies exactly argc argument pointers to main.
+  // Convert that externally bounded C array once; all later access uses span.
+#pragma clang unsafe_buffer_usage begin
+  const std::span<char*> process_arguments(argv, static_cast<size_t>(argc));
+#pragma clang unsafe_buffer_usage end
   std::vector<std::string> raw;
-  for (int i = 0; i < argc; ++i)
-    raw.emplace_back(argv[i]);
+  for (const char* argument : process_arguments)
+    raw.emplace_back(argument);
   auto normalized = mb::NormalizeStartupArguments(raw);
   if (!normalized.value)
     return Error(normalized.error);

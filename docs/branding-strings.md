@@ -67,14 +67,22 @@ mixed-language UI until product translations are supplied. Reusing an old
 fingerprint for changed wording would silently restore upstream branding and
 must be avoided.
 
-Numeric compiled resource IDs are separate from translation fingerprints. The
-generated `first_ids.py` carries the pinned allocation for each generated GRD:
-Chrome messages start at 800; component branded messages start at 7020. Keeping
-the original message tree/order preserves actual resource IDs. The mapping's
-`SRCDIR` is its own directory. GRIT takes this mapping with `-f` (there is no
-`--first-id-file` option in the pinned CLI).
+Numeric compiled resource IDs are separate from translation fingerprints.
+`resource_ids.spec` contains allocation seeds: Chromium's build counts resources
+and resolves the final ranges in `gen/tools/gritsettings/default_resource_ids`.
+The standalone `first_ids.py` uses the seeds only for isolated fixture comparison;
+its component start at 7020 is **not valid for the integrated build**. The first
+product locale repack caught that collision; the inspected resolved range started
+at 33390. Neither number is hardcoded into product GN integration.
 
-GRIT can compile the generated Chrome bundle directly:
+The product action `//mb:branding_resource_ids` depends on Chromium's allocation
+action and aliases its resolved entries to the generated GRD paths. Both native
+branded-string targets depend on that action and consume its output. Message
+order and conditions remain intact, preserving the resolved upstream IDs.
+GRIT takes the mapping with `-f` (there is no `--first-id-file` option in this CLI).
+
+For isolated fixture work only, GRIT can compile the generated Chrome bundle
+with seed IDs. Do not install or merge these standalone paks into a browser:
 
 ```sh
 GRIT_DISABLE_MULTIPROCESSING=1 TMPDIR="$PWD/.build/tmp" python \
@@ -103,7 +111,7 @@ python mb/test/test_branding_strings.py
 Tests invoke the pinned GRIT on separate baseline and derived inputs beneath
 `.build/tmp`, with multiprocessing disabled. Only test copies reduce outputs to
 the header and English/German paks; generated production inputs retain all
-outputs. The tests compare actual resource-ID maps, inspect product names and
+outputs. The standalone tests compare seed-based resource-ID maps, inspect product names and
 English fallback in paks, verify unchanged German translations, and check
 placeholder, copyright, and license-link preservation. They also exercise
 determinism and refusal of unsafe output paths. Missing pinned source skips the

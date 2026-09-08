@@ -64,3 +64,16 @@ changed; actual keyring/portal behavior and product identity are unverified.
   `components/safe_browsing/core/browser/db/v4_protocol_config.cc` and
   `db/v5_search_hashes_util.cc`; `chrome/browser/password_manager/factories/profile_password_store_factory.cc` and `password_store_backend_factory.cc`; `components/os_crypt/async/browser/freedesktop_secret_key_provider.cc`; and `secret_portal_key_provider.cc`.
 - [Chromium API keys documentation](https://www.chromium.org/developers/how-tos/api-keys/) explains the ownership and service restrictions that apply to any deliberately configured keys.
+
+## Product parser compiler integration
+
+Product C++ is compiled with Chromium's normal buffer diagnostics and runtime
+hardening. The C runtime argc/argv boundary uses a single documented conversion
+to std::span; subsequent access is bounded. The vendored toml++ header has a
+scoped `-Wunsafe-buffer-usage` diagnostic exception because its pointer-based
+implementation has not adopted Chromium's span migration. This is a static
+warning exception confined to that include, not a disabled sandbox, sanitizer
+or bounds check. The parser's 1 MiB input cap and value/key depth limits remain
+active and covered by tests. It does not establish that every vendor buffer
+access is audited; continued vendor updates and malformed-input testing remain
+part of maintenance. No target-wide buffer-warning suppression is added.

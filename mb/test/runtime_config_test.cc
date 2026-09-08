@@ -8,6 +8,7 @@
 #include <cstdlib>
 #include <filesystem>
 #include <string>
+#include <string_view>
 
 #include "gtest/gtest.h"
 
@@ -47,15 +48,13 @@ class RuntimeConfigTest : public testing::Test {
     EXPECT_GE(fd, 0);
     if (fd < 0)
       return path;
-    const char* cursor = contents.data();
-    std::size_t remaining = contents.size();
-    while (remaining > 0) {
-      const ssize_t count = write(fd, cursor, remaining);
+    std::string_view remaining = contents;
+    while (!remaining.empty()) {
+      const ssize_t count = write(fd, remaining.data(), remaining.size());
       EXPECT_GT(count, 0);
       if (count <= 0)
         break;
-      cursor += count;
-      remaining -= static_cast<std::size_t>(count);
+      remaining.remove_prefix(static_cast<std::size_t>(count));
     }
     EXPECT_EQ(close(fd), 0);
     return path;

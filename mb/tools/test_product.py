@@ -11,6 +11,7 @@ import sys
 ROOT = Path(__file__).resolve().parents[2]
 SUITES = {
     "upstream-tools": [["-m", "unittest", "mb.test.test_upstream_tools", "mb.test.test_upstream_smoke", "mb.test.test_check_upstream", "-v"]],
+    "integration-tools": [["-m", "unittest", "mb.test.test_product_integration", "mb.test.test_grit_resource_ids", "-v"]],
     "branding": [["-m", "unittest", "mb.test.test_branding", "mb.test.test_branding_assets", "mb.test.test_branding_strings", "-v"]],
     "startup": [["mb/tools/test_startup_arguments.py"]],
     "config": [["mb/tools/test_config.py"]],
@@ -34,7 +35,7 @@ def main():
         print(json.dumps(commands, indent=2))
         return 0
     source = ROOT / ".build/chromium/src"
-    if any(suite not in {"upstream-tools", "fixtures"} for suite in selected):
+    if any(suite not in {"upstream-tools", "integration-tools", "fixtures"} for suite in selected):
         for required in ("tools/grit/grit.py", "third_party/googletest/src/googletest/src/gtest.cc",
                          "third_party/llvm-build/Release+Asserts/bin/clang++"):
             if not (source / required).is_file():

@@ -1,10 +1,11 @@
 # Known limitations
 
-Updated 2026-09-08. This repository is in Phase 1 and does not yet provide a
-usable browser. The unmodified pinned Chromium build is running. No browser
-launch, custom UI, runtime isolation, extension compatibility, release build,
-or Arch package has passed acceptance testing. See [STATUS](../STATUS.md) for
-the active command and evidence.
+Updated 2026-09-08. Phase 1 passed: unmodified Chromium built and launched
+under actual Xorg with reviewed navigation, tabs, docked DevTools, sandbox and
+clean exit. This repository is entering Phase 2 and does not yet provide a
+usable product browser. Custom UI, runtime isolation, extension compatibility,
+release build and Arch packaging remain pending. See the [baseline review](upstream-baseline-2026-09-08.md)
+for the upstream data-URL debug assertion and unverified F12/Ctrl+T checks.
 
 The compiled configuration companion works independently. Its parser and
 environment-directory core have focused tests, but browser startup does not

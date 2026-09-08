@@ -1,9 +1,9 @@
 # Architecture and integration decisions
 
-Status: source inspection only. Product implementation is gated on the
-unmodified upstream build and sandboxed X11 launch. The current repository
-contains setup tooling and compiled standalone product libraries; it does not
-yet contain a custom browser UI.
+Status: the unmodified upstream build and sandboxed Xorg baseline passed.
+The product core and companion compile and pass tests inside Chromium GN.
+Native branding integration is applied and the renamed browser is compiling.
+The custom browser UI and startup service wiring remain pending.
 
 ## Product boundary
 
@@ -19,8 +19,9 @@ independent tab collection or implement a new profile/session engine.
 
 The setup repository and downloaded source checkout are separate Git
 repositories. The latter is a direct pinned Chromium checkout, not a browser
-embedding framework. A reproducible product-overlay/patch workflow will be
-implemented after the upstream gate; its exact mechanics are still pending.
+embedding framework. The implemented `product.py` workflow stages the product overlay, checks
+reviewed patches against pristine pinned blobs, preserves local edits, and
+records reproducible GN/build/test receipts. See [integration](product-integration.md).
 
 ## Native vertical tabs in the pinned release
 

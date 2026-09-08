@@ -8,6 +8,10 @@
 #if defined(__clang__)
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-literal-operator"
+// toml++ has not adopted Chromium's span migration. Limit this diagnostic
+// exception to the vendored header; product code below retains buffer checks.
+// Parser byte/key/value bounds and compiler/runtime hardening remain enabled.
+#pragma clang diagnostic ignored "-Wunsafe-buffer-usage"
 #endif
 #include "mb/third_party/tomlplusplus/toml.hpp"
 #if defined(__clang__)

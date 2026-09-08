@@ -109,7 +109,7 @@ def desktop_string(value):
 def render(manifest):
     product = manifest["product"]
     escaped = {key: xml_escape(value, {'"': "&quot;"}) for key, value in product.items()}
-    header = ["// Generated file; do not edit.", "#ifndef MB_GENERATED_BRANDING_H_", "#define MB_GENERATED_BRANDING_H_", "", "namespace mb::branding {"]
+    header = ["// Generated file; do not edit.", "#ifndef MB_GENERATED_BRANDING_H_", "#define MB_GENERATED_BRANDING_H_", "", f'#define MB_EXECUTABLE_NAME "{cxx_string(product["executable_name"])}"', "", "namespace mb::branding {"]
     for key in sorted(product):
         constant = "k" + "".join(part.capitalize() for part in key.split("_"))
         header.append(f'inline constexpr char {constant}[] = "{cxx_string(product[key])}";')

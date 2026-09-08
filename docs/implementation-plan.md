@@ -22,6 +22,8 @@ Exit evidence: recorded upstream identity and inspection results; required packa
 
 ## Phase 1: unmodified upstream gate
 
+Status: passed on 2026-09-08; see [the baseline review](upstream-baseline-2026-09-08.md).
+
 Fetch using `depot_tools` and the exact Chromium pin. Inspect requirements from the pinned source, run its dependency synchronization and hooks, and record actual tool revisions. Generate a conservative development build at `out/mb-debug`, initially using four build jobs. Keep temporary files on disk and recheck free space before sync/build.
 
 Compile unmodified Chromium. Launch under the real Xorg session with Ozone's X11 backend and the sandbox enabled, using a dedicated test user-data root. Record exact GN arguments, commands, build output, sandbox evidence, and startup/shutdown results. Do not use `--no-sandbox`.

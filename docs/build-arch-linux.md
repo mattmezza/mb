@@ -119,14 +119,17 @@ It checks the binary's SHA-256 against the receipt and revalidates source pins,
 then targets only the new test browser's PID/window. Screenshot and sandbox
 evidence still require inspection before the baseline gate can pass.
 
-Release output will use `src/out/mb-release`. Release commands, product
-integration and Arch packaging will be added and exercised in their phases;
-they are not yet implemented or validated.
+The upstream baseline has now passed on the actual Arch/Xorg machine. Product
+GN integration and its C++/companion tests also pass; see the [product commands](product-integration.md).
+The renamed browser is compiling. Release output will use `src/out/mb-release`;
+optimized build commands and Arch packaging remain pending.
 
 ## Product packaging requirements under preparation
 
 Chromium's development defaults set `generate_about_credits = is_official_build`.
-Consequently the current unmodified debug build embeds a sample credits page.
+Consequently the retained unmodified debug baseline used a sample credits page.
+Product debug arguments explicitly enable real credits; those have generated
+successfully and include the product-vendored toml++ notice.
 Before distributing any product build, explicitly generate the real upstream
 credits and include the product's third-party notices. Enabling real credits is
 required for the product debug build as well as the release build; it does not

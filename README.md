@@ -17,8 +17,9 @@ See [Arch build setup](docs/build-arch-linux.md) for dependency installation and
 fetching. Local downloads and build outputs live under ignored `.build/`.
 The existing `.tmux-session` file is user-owned and has not been changed.
 
-The source checkout must build and launch under Xorg with Chromium's sandbox
-enabled before any product integration. All daily-driver acceptance criteria
+The pinned, unmodified source built and passed a sandboxed launch on the actual
+Xorg session; see the [baseline review](docs/upstream-baseline-2026-09-08.md).
+Product branding integration is now in progress. All daily-driver acceptance criteria
 remain pending. Required Chromium licenses, notices and credits must accompany
 any eventual distribution; no distributable package is available yet.
 
@@ -46,3 +47,7 @@ runtime verification.
 Use `python3 mb/tools/check_upstream.py` to report the official Linux stable
 candidate without changing source or pins. The [update procedure](docs/upstream-updates.md)
 records the maintenance gates and work still required to rehearse a full update.
+
+Chromium's source license is retained verbatim in [LICENSE.chromium](LICENSE.chromium).
+Vendored toml++ retains its MIT license and provenance. Binary packages must also
+include generated third-party notices; no package is available yet.

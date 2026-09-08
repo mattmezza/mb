@@ -1,0 +1,296 @@
+diff --git a/chrome/BUILD.gn b/chrome/BUILD.gn
+index a33fe738ba..eca74273b2 100644
+--- a/chrome/BUILD.gn
++++ b/chrome/BUILD.gn
+@@ -33,6 +33,10 @@ import("//tools/v8_context_snapshot/v8_context_snapshot.gni")
+ import("//ui/gl/features.gni")
+ import("//v8/gni/v8.gni")
+ 
++if (is_linux) {
++  import("//mb/generated/branding/branding.gni")
++}
++
+ assert(!is_fuchsia, "Fuchsia shouldn't use anything in //chrome")
+ 
+ if (is_android) {
+@@ -151,6 +155,8 @@ if (!is_android && !is_mac) {
+ 
+   if (is_win) {
+     _chrome_output_name = "initialexe/chrome"
++  } else if (is_linux) {
++    _chrome_output_name = branding_executable_name
+   } else {
+     _chrome_output_name = "chrome"
+   }
+diff --git a/chrome/app/BUILD.gn b/chrome/app/BUILD.gn
+index c87ac7038e..56e0f36372 100644
+--- a/chrome/app/BUILD.gn
++++ b/chrome/app/BUILD.gn
+@@ -125,6 +125,13 @@ if (is_android) {
+ 
+ grit_strings("branded_strings") {
+   source = "${branding_path_product}_strings.grd"
++  if (is_linux) {
++    source = "//mb/generated/branding-strings/chromium_strings.grd"
++    resource_ids =
++        get_label_info("//mb:branding_resource_ids", "target_gen_dir") +
++        "/branding_resource_ids"
++    deps = [ "//mb:branding_resource_ids" ]
++  }
+   defines = chrome_grit_defines
+   output_dir = "$root_gen_dir/chrome"
+   outputs = [ "grit/branded_strings.h" ]
+diff --git a/chrome/app/theme/chrome_unscaled_resources.grd b/chrome/app/theme/chrome_unscaled_resources.grd
+index fe78c61bd8..4f7a3018ae 100644
+--- a/chrome/app/theme/chrome_unscaled_resources.grd
++++ b/chrome/app/theme/chrome_unscaled_resources.grd
+@@ -88,10 +88,10 @@
+               <include name="IDR_PRODUCT_LOGO_ANIMATION_SVG" file="${branding_path_component}/product_logo_animation.svg" type="BINDATA" />
+             </else>
+           </if> <!-- _is_chrome_for_testing_branded -->
+-            <include name="IDR_PRODUCT_LOGO_16_SHORTCUTS" file="chromium/product_logo_16.png" type="BINDATA" />
+-            <include name="IDR_PRODUCT_LOGO_24_SHORTCUTS" file="chromium/product_logo_24.png" type="BINDATA" />
+-            <include name="IDR_PRODUCT_LOGO_64_SHORTCUTS" file="chromium/product_logo_64.png" type="BINDATA" />
+-            <include name="IDR_PRODUCT_LOGO_128_SHORTCUTS" file="chromium/product_logo_128.png" type="BINDATA" />
++            <include name="IDR_PRODUCT_LOGO_16_SHORTCUTS" file="${branding_path_component}/product_logo_16.png" type="BINDATA" />
++            <include name="IDR_PRODUCT_LOGO_24_SHORTCUTS" file="${branding_path_component}/product_logo_24.png" type="BINDATA" />
++            <include name="IDR_PRODUCT_LOGO_64_SHORTCUTS" file="${branding_path_component}/product_logo_64.png" type="BINDATA" />
++            <include name="IDR_PRODUCT_LOGO_128_SHORTCUTS" file="${branding_path_component}/product_logo_128.png" type="BINDATA" />
+         </else>
+       </if> <!-- _google_chrome -->
+       <!-- NOTE: product_logo_*.* files beyond what's listed above are
+diff --git a/chrome/browser/BUILD.gn b/chrome/browser/BUILD.gn
+index e1d0017fc8..06fddd905a 100644
+--- a/chrome/browser/BUILD.gn
++++ b/chrome/browser/BUILD.gn
+@@ -1603,6 +1603,7 @@ source_set("core") {
+       ":fullscreen",
+       ":shell_integration_linux",
+       "//components/os_crypt/async/browser:posix_key_provider",
++      "//mb:branding",
+       "//third_party/libxml:xml_writer",
+       "//ui/linux:display_server_utils",
+     ]
+diff --git a/chrome/browser/shell_integration_linux.cc b/chrome/browser/shell_integration_linux.cc
+index 2c071e6ba8..5bc7305444 100644
+--- a/chrome/browser/shell_integration_linux.cc
++++ b/chrome/browser/shell_integration_linux.cc
+@@ -48,6 +48,7 @@
+ #include "chrome/common/chrome_switches.h"
+ #include "chrome/grit/branded_strings.h"
+ #include "components/version_info/version_info.h"
++#include "mb/generated/branding/branding.h"
+ #include "third_party/libxml/chromium/xml_writer.h"
+ #include "third_party/re2/src/re2/re2.h"
+ #include "ui/base/l10n/l10n_util.h"
+@@ -441,6 +442,9 @@ std::string GetProgramClassClass(const base::CommandLine& command_line,
+                                  const std::string& desktop_file_name) {
+   if (command_line.HasSwitch(switches::kWmClass))
+     return command_line.GetSwitchValueASCII(switches::kWmClass);
++  if (desktop_file_name == mb::branding::kDesktopFileName) {
++    return mb::branding::kApplicationId;
++  }
+   std::string desktop_base_name = GetDesktopBaseName(desktop_file_name);
+   if (auto* platform_utils =
+           ui::OzonePlatform::GetInstance()->GetPlatformUtils()) {
+@@ -467,11 +471,20 @@ std::string GetProgramClassClass() {
+                                         chrome::GetDesktopName(env.get()));
+ }
+ 
++std::string GetXdgAppId() {
++  const auto& command_line = *base::CommandLine::ForCurrentProcess();
++  if (command_line.HasSwitch(switches::kWmClass)) {
++    return command_line.GetSwitchValueASCII(switches::kWmClass);
++  }
++  auto env = base::Environment::Create();
++  return GetDesktopBaseName(chrome::GetDesktopName(env.get()));
++}
++
+ std::string GetIconName() {
+ #if BUILDFLAG(GOOGLE_CHROME_BRANDING)
+   return "google-chrome";
+ #else  // BUILDFLAG(CHROMIUM_BRANDING)
+-  return "chromium-browser";
++  return mb::branding::kShortName;
+ #endif
+ }
+ 
+@@ -875,7 +888,7 @@ std::string GetDirectLaunchUrlScheme() {
+       return "google-chrome";
+   }
+ #else
+-  return "chromium";
++  return mb::branding::kUrlScheme;
+ #endif
+ }
+ 
+diff --git a/chrome/browser/shell_integration_linux.h b/chrome/browser/shell_integration_linux.h
+index 4a930e015f..880e78cbdb 100644
+--- a/chrome/browser/shell_integration_linux.h
++++ b/chrome/browser/shell_integration_linux.h
+@@ -38,6 +38,9 @@ std::string GetProgramClassName();
+ // Gets the name for use as the res_class of the window's WM_CLASS property.
+ std::string GetProgramClassClass();
+ 
++// Returns the desktop-file basename used to identify regular Wayland windows.
++std::string GetXdgAppId();
++
+ // Returns name of the browser icon (without a path or file extension).
+ std::string GetIconName();
+ 
+diff --git a/chrome/browser/ui/views/frame/browser_native_widget_aura_linux.cc b/chrome/browser/ui/views/frame/browser_native_widget_aura_linux.cc
+index 32816295b4..c316987f02 100644
+--- a/chrome/browser/ui/views/frame/browser_native_widget_aura_linux.cc
++++ b/chrome/browser/ui/views/frame/browser_native_widget_aura_linux.cc
+@@ -64,7 +64,7 @@ views::Widget::InitParams BrowserNativeWidgetAuraLinux::GetWidgetParams(
+     params.wayland_app_id = shell_integration_linux::GetXdgAppIdForWebApp(
+         browser.app_name(), browser.GetProfile()->GetPath());
+   } else {
+-    params.wayland_app_id = params.wm_class_class;
++    params.wayland_app_id = shell_integration_linux::GetXdgAppId();
+   }
+ 
+   return params;
+diff --git a/chrome/common/BUILD.gn b/chrome/common/BUILD.gn
+index a45216bc2d..189740de36 100644
+--- a/chrome/common/BUILD.gn
++++ b/chrome/common/BUILD.gn
+@@ -90,6 +90,10 @@ source_set("channel_info") {
+   } else if (is_posix) {
+     sources += [ "channel_info_posix.cc" ]
+   }
++
++  if (is_linux) {
++    deps += [ "//mb:branding" ]
++  }
+ }
+ 
+ source_set("ini_parser") {
+@@ -473,6 +477,10 @@ static_library("non_code_constants") {
+   if (is_win) {
+     sources += [ "chrome_icon_resources_win.h" ]
+   }
++
++  if (is_linux) {
++    deps += [ "//mb:branding" ]
++  }
+ }
+ 
+ component("chrome_features") {
+@@ -615,6 +623,10 @@ static_library("constants") {
+       "//third_party/widevine/cdm:headers",
+     ]
+   }
++
++  if (is_linux) {
++    deps += [ "//mb:branding" ]
++  }
+ }
+ 
+ # Use a static library here because many test binaries depend on this but don't
+diff --git a/chrome/common/channel_info_posix.cc b/chrome/common/channel_info_posix.cc
+index f6bcb3cc8e..7848d62db6 100644
+--- a/chrome/common/channel_info_posix.cc
++++ b/chrome/common/channel_info_posix.cc
+@@ -18,6 +18,10 @@
+ #include "build/build_config.h"
+ #include "components/version_info/version_info.h"
+ 
++#if BUILDFLAG(IS_LINUX)
++#include "mb/generated/branding/branding.h"
++#endif
++
+ namespace chrome {
+ 
+ namespace {
+@@ -148,7 +152,7 @@ std::string GetDesktopName(base::Environment* env) {
+   if (name.has_value() && !name.value().empty()) {
+     return name.value();
+   }
+-  return "chromium-browser.desktop";
++  return mb::branding::kDesktopFileName;
+ #endif
+ }
+ #endif  // BUILDFLAG(IS_LINUX)
+diff --git a/chrome/common/chrome_constants.cc b/chrome/common/chrome_constants.cc
+index 6e30ef1147..0bada07694 100644
+--- a/chrome/common/chrome_constants.cc
++++ b/chrome/common/chrome_constants.cc
+@@ -7,6 +7,10 @@
+ #include "build/build_config.h"
+ #include "chrome/common/chrome_version.h"
+ 
++#if BUILDFLAG(IS_LINUX)
++#include "mb/generated/branding/branding.h"
++#endif
++
+ #define FPL FILE_PATH_LITERAL
+ 
+ namespace chrome {
+@@ -46,7 +50,12 @@ const base::FilePath::CharType kBrowserProcessExecutableName[] = FPL("chrome");
+ const base::FilePath::CharType kHelperProcessExecutableName[] =
+     FPL("sandboxed_process");
+ #elif BUILDFLAG(IS_POSIX)
++#if BUILDFLAG(IS_LINUX)
++const base::FilePath::CharType kBrowserProcessExecutableName[] =
++    FPL(MB_EXECUTABLE_NAME);
++#else
+ const base::FilePath::CharType kBrowserProcessExecutableName[] = FPL("chrome");
++#endif
+ // Helper processes end up with a name of "exe" due to execing via
+ // /proc/self/exe.  See bug 22703.
+ const base::FilePath::CharType kHelperProcessExecutableName[] = FPL("exe");
+@@ -74,6 +83,11 @@ const base::FilePath::CharType kHelperProcessExecutablePath[] =
+ #elif BUILDFLAG(IS_ANDROID)
+ const base::FilePath::CharType kBrowserProcessExecutablePath[] = FPL("chrome");
+ const base::FilePath::CharType kHelperProcessExecutablePath[] = FPL("chrome");
++#elif BUILDFLAG(IS_LINUX)
++const base::FilePath::CharType kBrowserProcessExecutablePath[] =
++    FPL(MB_EXECUTABLE_NAME);
++const base::FilePath::CharType kHelperProcessExecutablePath[] =
++    FPL(MB_EXECUTABLE_NAME);
+ #elif BUILDFLAG(IS_POSIX)
+ const base::FilePath::CharType kBrowserProcessExecutablePath[] = FPL("chrome");
+ const base::FilePath::CharType kHelperProcessExecutablePath[] = FPL("chrome");
+diff --git a/chrome/common/chrome_paths_linux.cc b/chrome/common/chrome_paths_linux.cc
+index 5575c049b2..eeb560e434 100644
+--- a/chrome/common/chrome_paths_linux.cc
++++ b/chrome/common/chrome_paths_linux.cc
+@@ -18,6 +18,10 @@
+ #include "chrome/common/channel_info.h"
+ #include "chrome/common/chrome_paths_internal.h"
+ 
++#if BUILDFLAG(IS_LINUX)
++#include "mb/generated/branding/branding.h"
++#endif
++
+ namespace chrome {
+ 
+ using base::nix::GetXDGDirectory;
+@@ -94,6 +98,8 @@ bool GetDefaultUserDataDirectory(base::FilePath* result) {
+   std::string data_dir_basename = "google-chrome-for-testing";
+ #elif BUILDFLAG(GOOGLE_CHROME_BRANDING)
+   std::string data_dir_basename = "google-chrome";
++#elif BUILDFLAG(IS_LINUX)
++  std::string data_dir_basename = mb::branding::kProfileDirectoryName;
+ #else
+   std::string data_dir_basename = "chromium";
+ #endif
+diff --git a/components/strings/BUILD.gn b/components/strings/BUILD.gn
+index 5fdb243985..ac788d6691 100644
+--- a/components/strings/BUILD.gn
++++ b/components/strings/BUILD.gn
+@@ -55,6 +55,13 @@ if (is_android) {
+ 
+ grit_strings("components_branded_strings") {
+   source = "../components_${branding_path_product}_strings.grd"
++  if (is_linux) {
++    source = "//mb/generated/branding-strings/components_chromium_strings.grd"
++    resource_ids =
++        get_label_info("//mb:branding_resource_ids", "target_gen_dir") +
++        "/branding_resource_ids"
++    deps = [ "//mb:branding_resource_ids" ]
++  }
+   outputs = [ "grit/components_branded_strings.h" ]
+ }
+ 
