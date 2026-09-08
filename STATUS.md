@@ -61,6 +61,14 @@ Updated: 2026-09-08.
   680 resource IDs and 142 unchanged German translations. All 166 inputs are
   checked against their pinned Git blobs. Changed messages use upstream's
   English fallback; copyrights, license links and placeholders are retained.
+- Runtime selection preparation: six standalone GoogleTests pass for explicit,
+  remembered and default environment precedence, diagnostic keys, canonical
+  configuration paths and all-root audit without directory creation. Browser
+  consumption and remembered-name persistence remain pending.
+- Focused test runner: `python3 mb/tools/test_product.py`; selected upstream
+  tooling and fixture suites passed with timestamped command logs/receipts.
+  Test-source reconnaissance identified Chromium's reusable browser-test runner
+  for a later small product suite. No browser test target has been built yet.
 
 ## Exact continuation
 

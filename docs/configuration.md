@@ -7,6 +7,15 @@ and compiled control command can already validate files and inspect environment
 paths. They never create environment directories, acquire browser locks, or
 launch Chromium.
 
+`LoadRuntimeConfig` combines that loader and environment audit into a value
+snapshot. A caller supplies the filename, home directory, and optional explicit
+and remembered environment names. An explicit name takes priority and an
+unknown name fails with a `--environment` diagnostic. A remembered name is used
+only when `app.restore_last_environment` is enabled; a stale name warns and
+falls back to the configured default. All configured roots are audited before
+a snapshot is returned, and no environment directories are created. Persistence
+of the remembered name and consumption by browser startup remain pending.
+
 The parser accepts at most 1 MiB of TOML, uses toml++ with exceptions disabled,
 and returns all validation failures as diagnostics containing the supplied file
 name, full configuration key, and source line when one is available. No

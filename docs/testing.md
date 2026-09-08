@@ -295,16 +295,35 @@ or agent, supported by screenshots or logs.
 
 ## Standalone product checks
 
+Run all standalone suites, or select focused suites, with:
+
+```sh
+python3 mb/tools/test_product.py --list
+python3 mb/tools/test_product.py
+python3 mb/tools/test_product.py --suite config --suite environments
+```
+
+After bootstrap, `.build/depot_tools/python-bin/python3` can replace `python3`
+in these commands to use the downloaded, pinned Python interpreter.
+
+The runner executes suites sequentially and keeps each command's log and exit
+status in a timestamped `.build/test-evidence/standalone-*` directory. It fails
+on the first unsuccessful command and requires fetched build inputs for suites
+that use them. These receipts explicitly exclude browser acceptance. Individual
+commands below remain useful during development.
+
 Observed on this Arch machine on 2026-09-08:
 
 | Command | Result |
 | --- | --- |
 | `python3 -m unittest mb.test.test_upstream_tools mb.test.test_branding -v` | 23 passed; includes generated/version-header compilation, actual pinned GN evaluation, and safe output migration |
 | `python3 -m unittest mb.test.test_branding_assets -v` | 4 actual-renderer tests passed; native dimensions, deterministic bytes, and safe output handling |
+| `python3 -m unittest mb.test.test_upstream_smoke -v` | Linux Chromium process-title regression passed; owned non-dumpable child behavior also checked on the actual kernel |
 | `python3 mb/test/test_branding_strings.py` | 7 passed; pinned GRIT preserves 680 resource IDs and 142 German translations; checks attribution and English fallback |
 | `python3 mb/tools/test_startup_arguments.py` | 8 GoogleTests passed |
 | `python3 mb/tools/test_config.py` | 15 GoogleTests passed, including excessive nesting and malformed UTF-8 |
 | `python3 mb/tools/test_environment_paths.py` | 22 GoogleTests passed, including concurrent creation, permissions, symlinks and path lengths |
+| `python3 mb/tools/test_runtime_config.py` | 6 GoogleTests passed; selection precedence, useful errors/warnings, canonical config location, all-root audit and no directory creation |
 | `python3 mb/tools/build_control.py` then `python3 -m unittest mb.test.test_control -v` | Compiled companion and 17 command-level tests passed |
 
 The C++ checks use C++20, disabled exceptions/RTTI, and the pinned Clang. Outputs
@@ -316,6 +335,21 @@ The parser's vendor patch was applied to a disposable copy of its pinned
 upstream single header and reproduced the checked-in header byte for byte.
 These results establish standalone behavior only; they do not establish browser
 isolation, sandboxing, extension compatibility, or a working product UI.
+
+## Focused browser-test target (pending integration)
+
+The pinned `//chrome/test:browser_tests_runner` supplies the existing browser
+test main and launcher without including all upstream test cases. The separate
+`//chrome/test/device_realtarget` executable is an upstream example. The product
+test target will use this runner, `//chrome/test:test_support`,
+`//chrome/test:test_support_ui`, `//chrome:packed_resources`, and its directly
+used product/model/View dependencies. It will retain `InProcessBrowserTest`
+and Chromium's launcher instead of introducing a replacement harness.
+
+Test support still requires substantial compilation. The launcher also bypasses
+the production executable's raw `chrome_main.cc` entry point, so early argument
+handling needs its standalone tests and real executable smoke tests. This target
+has not yet been generated or linked; it is the selected integration approach.
 
 ## Local capability fixtures
 
