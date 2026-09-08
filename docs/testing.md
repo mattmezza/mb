@@ -10,8 +10,8 @@ results and do not establish browser runtime behavior.
 
 Status as of 2026-09-08: Phase 1 is compiling pinned upstream Chromium stable
 152.0.7977.82. There has been no successful browser build and no successful
-browser test. Every result below is pending. This document is a procedure, not
-evidence that any command has run or passed.
+browser test. The browser protocols below are pending procedures; observed
+standalone results are recorded separately.
 
 ## Phase 1 baseline gate
 

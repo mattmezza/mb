@@ -19,6 +19,21 @@ marked **pending** require a browser-level check.
   require an API key and only attaches one for a Chrome-branded build. This is
   evidence of an unbranded request path, **not** evidence that the service will
   accept this binary, every extension, or every install/update flow.
+- The pinned build exposes `webstorePrivate` to the current storefront origin,
+  `https://chromewebstore.google.com/`, without a Google-branding gate. The
+  two-stage install flow requires a prior approval for the same browser context
+  and extension ID; completing installation rejects guest/incognito contexts.
+  Begin store tests in a regular environment window and test incognito access
+  separately after installation.
+- Unbranded extension requests use the upstream `chromiumcrx` protocol identity.
+  The inspected install entry points do not gate installation on the executable
+  filename. Keep protocol identity separate from replaceable display branding.
+  This does not establish how the remote storefront treats browser identity.
+- Store installs retain CRX3 publisher-proof verification. Linux manual packed
+  installs retain signed CRX3, ID, manifest, prompt and policy checks. A deliberate
+  dropped-file installation on `chrome://extensions` uses a different permitted
+  path from an ordinary off-store download. Do not treat every downloaded CRX
+  as automatically installable or change verification to make it install.
 
 ## Pending runtime checks
 
@@ -33,12 +48,29 @@ binary. If Chrome Web Store installation is unavailable, use only legitimate
 developer, enterprise-policy, or publisher-supported distribution methods;
 do not bypass store controls.
 
+First load the owned unpacked MV3 fixture through Developer mode and Load
+unpacked in an isolated regular environment. Then test a public store listing
+without origin overrides or other installation switches. Record listing/button
+availability, permission approval, download response/error, installed ID/version,
+restart persistence and removal separately. Successful installation does not
+establish that extension updates work; updates need their own observation.
+
 ## Sources
 
 - Pinned Chromium `d04cdb24d67b081f6cf80200ffc5233f44b61109`:
   `google_apis/config.gni`, `google_apis/default_api_keys-inc.cc`,
   `extensions/browser/webstore_installer.cc`, and
   `extensions/browser/webstore_data_fetcher.cc`.
+- Additional pinned install paths: `extensions/common/api/_api_features.json`,
+  `extensions/browser/api/webstore_private/webstore_private_api.cc`,
+  `components/update_client/update_query_params.cc`,
+  `extensions/common/verifier_formats.cc`, `extensions/browser/crx_installer.cc`,
+  and `chrome/browser/extensions/api/developer_private/developer_private_functions.cc`.
 - [Chromium API keys documentation](https://www.chromium.org/developers/how-tos/api-keys/) documents key ownership, restricted Chromium sign-in, and the restricted `chrome.identity.getAuthToken` implementation.
 - [Chromium announcement on private API availability](https://blog.chromium.org/2021/01/limiting-private-api-availability-in.html) covers the Chrome Sync/private-API restriction.
 - [Chrome extension installation documentation](https://developer.chrome.com/docs/extensions/how-to/distribute/install-extensions) describes supported installation methods; it does not certify an unbranded build's Web Store access.
+- [Linux self-hosting](https://developer.chrome.com/docs/extensions/how-to/distribute/host-on-linux)
+  describes publisher packaging and update distribution. Its older examples do
+  not replace verification of the pinned browser's current install paths.
+- [Manifest V3 Hello World](https://developer.chrome.com/docs/extensions/get-started/tutorial/hello-world)
+  documents the Developer mode/Load unpacked workflow used by the local fixture.
