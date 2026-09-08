@@ -32,7 +32,8 @@ navigation/tab assertions, kernel sandbox checks, screenshots and shutdown.
 It opens direct test URLs via Alt+Enter, avoiding stock remote NTP UI; Ctrl+T
 remains a product verification item. Base64 HTML avoids the recorded upstream
 percent-encoded data-URL debug assertion. DevTools uses Ctrl+Shift+I with time
-for its first frontend load; F12 is a separate pending check.
+for its first frontend load. F12 now passed the first sidebar Xorg input check;
+see [the dated review](sidebar-baseline-2026-09-08.md).
 It uses the caller's `DISPLAY`; confirm this is the actual Xorg session, not a
 virtual or unintended display. Its successful result still requires a dated
 `results.md` in the evidence directory recording visual review of navigation,
@@ -307,7 +308,7 @@ or agent, supported by screenshots or logs.
 | Sandbox | `/proc` renderer status and command-line capture | `chrome://sandbox` inspection | Passed scoped Phase 1 and Phase 2 gates |
 | Product configuration | Parser/schema and compiled control-command tests pass | Browser restart/reload and error presentation | Standalone code tested; browser integration pending |
 | Named environments | Path/collision/secure-creation tests pass; browser locking and storage tests pending | Two concurrent environment workflows | Standalone path core tested; browser integration pending |
-| Product tab sidebar | Model/browser tests, keyboard operations, 100-tab measurements | Mouse, focus, resize, drag, state and accessibility checks | Native tab baseline passed; custom sidebar integration pending |
+| Product tab sidebar | Model/browser tests, keyboard operations, 100-tab measurements | Mouse, focus, resize, drag, state and accessibility checks | Initial sidebar browser/Xorg input checkpoint passed; scale and broader accessibility/status coverage pending |
 | Incognito | Off-the-record and persistence assertions | Normal/incognito distinction and workflow | Pending Phases 4–5 |
 | Extensions | MV3 load, service worker, content script, storage and isolation tests | Action UI, permissions, enable/disable/removal and extension DevTools | Pending Phase 5 |
 | DevTools | Future browser tests for opening and inspected targets | Shortcuts, context Inspect, panels and docking in normal/incognito windows | Ctrl+Shift+I docked Elements observed; Phase 5 depth pending |

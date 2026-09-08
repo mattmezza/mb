@@ -1,0 +1,435 @@
+diff --git a/chrome/browser/ui/BUILD.gn b/chrome/browser/ui/BUILD.gn
+--- a/chrome/browser/ui/BUILD.gn
++++ b/chrome/browser/ui/BUILD.gn
+@@ -170,6 +170,7 @@
+     if (is_win || is_mac || is_linux) {
+       deps += [ "//chrome/browser/ui/startup/default_browser_prompt" ]
+     }
++    deps += [ "//mb:sidebar_policy" ]
+   }
+ }
+ 
+@@ -5255,6 +5256,16 @@
+   if (toolkit_views) {
+     deps += [ "//chrome/browser/ui/views/frame:top_controls_slide_controller" ]
+   }
++  deps += [ "//mb:sidebar_policy" ]
++  if (is_linux) {
++    sources += [
++      "//mb/browser/browser_window_adapter.cc",
++      "//mb/browser/browser_window_adapter.h",
++      "//mb/ui/sidebar/sidebar_view.cc",
++      "//mb/ui/sidebar/sidebar_view.h",
++    ]
++    deps += [ "//mb:branding" ]
++  }
+ }
+ 
+ # These are the dependencies for the "ui" target that are outside of
+diff --git a/chrome/browser/ui/tabs/BUILD.gn b/chrome/browser/ui/tabs/BUILD.gn
+--- a/chrome/browser/ui/tabs/BUILD.gn
++++ b/chrome/browser/ui/tabs/BUILD.gn
+@@ -52,6 +52,7 @@
+     ]
+     public_deps = [ "//base" ]
+     deps = [ "//chrome/browser/ui:ui_features" ]
++    deps += [ "//mb:sidebar_policy" ]
+   }
+ 
+   source_set("tab_menu") {
+@@ -601,6 +602,7 @@
+     if (is_chromeos) {
+       deps += [ "//chrome/browser/apps/app_service" ]
+     }
++    deps += [ "//mb:sidebar_policy" ]
+   }
+ 
+   # This is a separate component to avoid possible circular deps.
+diff --git a/chrome/browser/ui/webui/settings/BUILD.gn b/chrome/browser/ui/webui/settings/BUILD.gn
+--- a/chrome/browser/ui/webui/settings/BUILD.gn
++++ b/chrome/browser/ui/webui/settings/BUILD.gn
+@@ -395,6 +395,7 @@
+       "//ui/chromeos",
+     ]
+   }
++  deps += [ "//mb:sidebar_policy" ]
+ }
+ 
+ source_set("test_support") {
+diff --git a/chrome/browser/ui/views/frame/vertical_tab_strip_region_view.h b/chrome/browser/ui/views/frame/vertical_tab_strip_region_view.h
+--- a/chrome/browser/ui/views/frame/vertical_tab_strip_region_view.h
++++ b/chrome/browser/ui/views/frame/vertical_tab_strip_region_view.h
+@@ -49,7 +49,7 @@
+ 
+ // Container for the vertical tabstrip and the other views sharing space with
+ // it, excluding the caption buttons.
+-class VerticalTabStripRegionView final
++class VerticalTabStripRegionView
+     : public BaseTabStripRegionView,
+       public views::ResizeAreaDelegate,
+       public OmniboxTabHelper::Observer,
+diff --git a/chrome/browser/ui/views/frame/browser_view.cc b/chrome/browser/ui/views/frame/browser_view.cc
+--- a/chrome/browser/ui/views/frame/browser_view.cc
++++ b/chrome/browser/ui/views/frame/browser_view.cc
+@@ -3,6 +3,12 @@
+ // found in the LICENSE file.
+ 
+ #include "chrome/browser/ui/views/frame/browser_view.h"
++
++#include "mb/common/sidebar_policy.h"
++
++#if BUILDFLAG(IS_LINUX)
++#include "mb/ui/sidebar/sidebar_view.h"
++#endif
+ 
+ #include <stdint.h>
+ 
+@@ -973,10 +979,20 @@
+   auto* const vertical_tab_strip_state_controller =
+       tabs::VerticalTabStripStateController::From(browser_);
+   if (vertical_tab_strip_state_controller) {
+-    auto vertical_tab_strip_container =
+-        std::make_unique<VerticalTabStripRegionView>(
+-            vertical_tab_strip_state_controller,
+-            browser_->GetActions()->root_action_item(), this);
++    std::unique_ptr<VerticalTabStripRegionView> vertical_tab_strip_container;
++#if BUILDFLAG(IS_LINUX)
++    if (mb::RequiresVerticalSidebar(GetIsNormalType())) {
++      vertical_tab_strip_container = std::make_unique<mb::SidebarView>(
++          vertical_tab_strip_state_controller,
++          browser_->GetActions()->root_action_item(), this);
++    } else
++#endif
++    {
++      vertical_tab_strip_container =
++          std::make_unique<VerticalTabStripRegionView>(
++              vertical_tab_strip_state_controller,
++              browser_->GetActions()->root_action_item(), this);
++    }
+ 
+     if (base::FeatureList::IsEnabled(features::kGlassFrame)) {
+       vertical_tab_strip_background_blur_backdrop_ = AddChildView(
+diff --git a/chrome/browser/ui/tabs/features.cc b/chrome/browser/ui/tabs/features.cc
+--- a/chrome/browser/ui/tabs/features.cc
++++ b/chrome/browser/ui/tabs/features.cc
+@@ -3,6 +3,8 @@
+ // found in the LICENSE file.
+ 
+ #include "chrome/browser/ui/tabs/features.h"
++
++#include "mb/common/sidebar_policy.h"
+ 
+ #include "base/feature_list.h"
+ #include "base/time/time.h"
+@@ -114,7 +116,8 @@
+ }
+ 
+ bool IsVerticalTabsFeatureEnabled() {
+-  return base::FeatureList::IsEnabled(kVerticalTabs) ||
++  return mb::RequiresVerticalSidebar(/*is_normal_window=*/true) ||
++         base::FeatureList::IsEnabled(kVerticalTabs) ||
+          base::FeatureList::IsEnabled(kVerticalTabsLaunch);
+   ;
+ }
+diff --git a/chrome/browser/ui/tabs/vertical_tab_strip_state_controller.h b/chrome/browser/ui/tabs/vertical_tab_strip_state_controller.h
+--- a/chrome/browser/ui/tabs/vertical_tab_strip_state_controller.h
++++ b/chrome/browser/ui/tabs/vertical_tab_strip_state_controller.h
+@@ -85,6 +85,8 @@
+ 
+   void SetDelegate(Delegate* delegate);
+ 
++  // Whether product policy fixes this window to vertical orientation.
++  bool IsOrientationFixed() const;
+   bool ShouldDisplayVerticalTabs() const;
+   void SetVerticalTabsEnabled(bool enabled);
+ 
+diff --git a/chrome/browser/ui/tabs/vertical_tab_strip_state_controller.cc b/chrome/browser/ui/tabs/vertical_tab_strip_state_controller.cc
+--- a/chrome/browser/ui/tabs/vertical_tab_strip_state_controller.cc
++++ b/chrome/browser/ui/tabs/vertical_tab_strip_state_controller.cc
+@@ -3,6 +3,8 @@
+ // found in the LICENSE file.
+ 
+ #include "chrome/browser/ui/tabs/vertical_tab_strip_state_controller.h"
++
++#include "mb/common/sidebar_policy.h"
+ 
+ #include <optional>
+ 
+@@ -60,6 +62,7 @@
+   pref_change_registrar_.Init(pref_service_);
+ 
+   is_vertical_tabs_enabled_ =
++      IsOrientationFixed() ||
+       pref_service_->GetBoolean(prefs::kVerticalTabsEnabled);
+ 
+   pref_change_registrar_.Add(
+@@ -177,11 +180,20 @@
+   }
+ }
+ 
++bool VerticalTabStripStateController::IsOrientationFixed() const {
++  return mb::RequiresVerticalSidebar(
++      browser_window_->GetType() == BrowserWindowInterface::Type::TYPE_NORMAL);
++}
++
+ bool VerticalTabStripStateController::ShouldDisplayVerticalTabs() const {
+-  return IsVerticalTabsFeatureEnabled() && is_vertical_tabs_enabled_;
++  return IsOrientationFixed() ||
++         (IsVerticalTabsFeatureEnabled() && is_vertical_tabs_enabled_);
+ }
+ 
+ void VerticalTabStripStateController::SetVerticalTabsEnabled(bool enabled) {
++  if (IsOrientationFixed()) {
++    return;
++  }
+   NotifyModeWillChange();
+   pref_service_->SetBoolean(prefs::kVerticalTabsEnabled, enabled);
+ }
+@@ -289,7 +301,11 @@
+ 
+ void VerticalTabStripStateController::OnModeChanged() {
+   const bool new_enabled =
++      IsOrientationFixed() ||
+       pref_service_->GetBoolean(prefs::kVerticalTabsEnabled);
++  if (IsOrientationFixed() && new_enabled == is_vertical_tabs_enabled_) {
++    return;
++  }
+   if (new_enabled &&
+       !pref_service_->GetBoolean(prefs::kVerticalTabsEnabledFirstTime)) {
+     base::RecordAction(
+@@ -349,7 +365,9 @@
+   enable_state_lock_count_--;
+ 
+   if (enable_state_lock_count_ == 0) {
+-    bool new_state = pref_service_->GetBoolean(prefs::kVerticalTabsEnabled);
++    const bool new_state =
++        IsOrientationFixed() ||
++        pref_service_->GetBoolean(prefs::kVerticalTabsEnabled);
+     if (new_state != is_vertical_tabs_enabled_) {
+       is_vertical_tabs_enabled_ = new_state;
+       NotifyModeChanged();
+diff --git a/chrome/browser/ui/tabs/tab_menu_model.cc b/chrome/browser/ui/tabs/tab_menu_model.cc
+--- a/chrome/browser/ui/tabs/tab_menu_model.cc
++++ b/chrome/browser/ui/tabs/tab_menu_model.cc
+@@ -499,7 +499,8 @@
+     }
+   }
+ 
+-  if (tabs::kVerticalTabsToggleInTabContextMenu.Get() && controller) {
++  if (tabs::kVerticalTabsToggleInTabContextMenu.Get() && controller &&
++      !controller->IsOrientationFixed()) {
+     AddSeparator(ui::NORMAL_SEPARATOR);
+     if (controller->ShouldDisplayVerticalTabs()) {
+       AddItemWithStringId(TabStripModel::CommandToggleVertical,
+diff --git a/chrome/browser/ui/views/frame/system_menu_model_builder.cc b/chrome/browser/ui/views/frame/system_menu_model_builder.cc
+--- a/chrome/browser/ui/views/frame/system_menu_model_builder.cc
++++ b/chrome/browser/ui/views/frame/system_menu_model_builder.cc
+@@ -183,8 +183,10 @@
+     model->AddSeparator(ui::NORMAL_SEPARATOR);
+ 
+     if (controller->ShouldDisplayVerticalTabs()) {
+-      model->AddItemWithStringId(IDC_TOGGLE_VERTICAL_TABS,
+-                                 IDS_SWITCH_TO_HORIZONTAL_TAB);
++      if (!controller->IsOrientationFixed()) {
++        model->AddItemWithStringId(IDC_TOGGLE_VERTICAL_TABS,
++                                   IDS_SWITCH_TO_HORIZONTAL_TAB);
++      }
+ 
+       model->AddItemWithStringId(IDC_TOGGLE_VERTICAL_TABS_COLLAPSE,
+                                  controller->IsCollapsed()
+@@ -210,9 +212,11 @@
+           model->GetIndexOfCommandId(IDC_TOGGLE_VERTICAL_TABS).value(),
+           show_badge, badge_type);
+     }
+-    model->SetElementIdentifierAt(
+-        model->GetIndexOfCommandId(IDC_TOGGLE_VERTICAL_TABS).value(),
+-        kToggleVerticalTabsElementId);
++    if (!controller->IsOrientationFixed()) {
++      model->SetElementIdentifierAt(
++          model->GetIndexOfCommandId(IDC_TOGGLE_VERTICAL_TABS).value(),
++          kToggleVerticalTabsElementId);
++    }
+ 
+     const bool show_expand_on_hover =
+         tabs::IsVerticalTabsExpandOnHoverFeatureEnabled() &&
+diff --git a/chrome/browser/ui/browser_commands.cc b/chrome/browser/ui/browser_commands.cc
+--- a/chrome/browser/ui/browser_commands.cc
++++ b/chrome/browser/ui/browser_commands.cc
+@@ -2444,7 +2444,7 @@
+ void ToggleVerticalTabs(BrowserWindowInterface* browser) {
+   tabs::VerticalTabStripStateController* controller =
+       tabs::VerticalTabStripStateController::From(browser);
+-  if (!controller) {
++  if (!controller || controller->IsOrientationFixed()) {
+     return;
+   }
+   controller->SetVerticalTabsEnabled(!controller->ShouldDisplayVerticalTabs());
+diff --git a/chrome/browser/ui/browser_command_controller.cc b/chrome/browser/ui/browser_command_controller.cc
+--- a/chrome/browser/ui/browser_command_controller.cc
++++ b/chrome/browser/ui/browser_command_controller.cc
+@@ -3,6 +3,8 @@
+ // found in the LICENSE file.
+ 
+ #include "chrome/browser/ui/browser_command_controller.h"
++
++#include "mb/common/sidebar_policy.h"
+ 
+ #include <stddef.h>
+ 
+@@ -1738,7 +1740,9 @@
+   UpdateTabRestoreCommandState();
+   command_updater_->UpdateCommandEnabled(IDC_EXIT, true);
+   command_updater_->UpdateCommandEnabled(IDC_NAME_WINDOW, true);
+-  command_updater_->UpdateCommandEnabled(IDC_TOGGLE_VERTICAL_TABS, true);
++  command_updater_->UpdateCommandEnabled(
++      IDC_TOGGLE_VERTICAL_TABS,
++      !mb::RequiresVerticalSidebar(browser_->is_type_normal()));
+   command_updater_->UpdateCommandEnabled(IDC_VERTICAL_TABS_SEND_FEEDBACK, true);
+   command_updater_->UpdateCommandEnabled(
+       IDC_TOGGLE_VERTICAL_TABS_EXPAND_ON_HOVER, true);
+diff --git a/chrome/browser/ui/webui/settings/settings_localized_strings_provider.cc b/chrome/browser/ui/webui/settings/settings_localized_strings_provider.cc
+--- a/chrome/browser/ui/webui/settings/settings_localized_strings_provider.cc
++++ b/chrome/browser/ui/webui/settings/settings_localized_strings_provider.cc
+@@ -3,6 +3,8 @@
+ // found in the LICENSE file.
+ 
+ #include "chrome/browser/ui/webui/settings/settings_localized_strings_provider.h"
++
++#include "mb/common/sidebar_policy.h"
+ 
+ #include <string>
+ 
+@@ -672,6 +674,9 @@
+       base::FeatureList::IsEnabled(features::kTabHoverCardImages));
+   html_source->AddBoolean("showVerticalTabsEnabled",
+                           tabs::IsVerticalTabsFeatureEnabled());
++  html_source->AddBoolean(
++      "verticalTabsOrientationFixed",
++      mb::RequiresVerticalSidebar(/*is_normal_window=*/true));
+   html_source->AddBoolean("showGlassEffectEnabled",
+                           features::IsGlassFrameEnabled());
+   html_source->AddBoolean("showVerticalTabsExpandOnHoverEnabled",
+diff --git a/chrome/browser/resources/settings/appearance_page/appearance_page.ts b/chrome/browser/resources/settings/appearance_page/appearance_page.ts
+--- a/chrome/browser/resources/settings/appearance_page/appearance_page.ts
++++ b/chrome/browser/resources/settings/appearance_page/appearance_page.ts
+@@ -168,6 +168,7 @@
+       glassEffectOptions_: {type: Array},
+       tabStripOptions_: {type: Array},
+       showVerticalTabsEnabled_: {type: Boolean},
++      verticalTabsOrientationFixed_: {type: Boolean},
+       showGlassEffectEnabled_: {type: Boolean},
+       ntpSimplificationBookmarksBarEnabled_: {type: Boolean},
+       bookmarksBarOptions_: {type: Array},
+@@ -296,6 +297,8 @@
+   protected accessor showManagedThemeDialog_: boolean = false;
+   protected accessor showVerticalTabsEnabled_: boolean =
+       loadTimeData.getBoolean('showVerticalTabsEnabled');
++  protected accessor verticalTabsOrientationFixed_: boolean =
++      loadTimeData.getBoolean('verticalTabsOrientationFixed');
+   protected accessor showGlassEffectEnabled_: boolean =
+       loadTimeData.getBoolean('showGlassEffectEnabled');
+   protected accessor ntpSimplificationBookmarksBarEnabled_: boolean =
+@@ -685,12 +688,9 @@
+   }
+ 
+   protected showVerticalTabsExpandOnHoverSetting_(): boolean {
+-    if (this.verticalTabsEnabledPref_ === undefined) {
+-      return false;
+-    }
+-
+     return this.showVerticalTabsExpandOnHoverEnabled_ &&
+-        this.verticalTabsEnabledPref_.value;
++        (this.verticalTabsOrientationFixed_ ||
++         !!this.verticalTabsEnabledPref_?.value);
+   }
+ 
+ 
+diff --git a/chrome/browser/resources/settings/appearance_page/appearance_page.html.ts b/chrome/browser/resources/settings/appearance_page/appearance_page.html.ts
+--- a/chrome/browser/resources/settings/appearance_page/appearance_page.html.ts
++++ b/chrome/browser/resources/settings/appearance_page/appearance_page.html.ts
+@@ -162,7 +162,7 @@
+ 
+ 
+     ${this.showVerticalTabsEnabled_ ? html`
+-      <div class="cr-row">
++      <div class="cr-row" ?hidden="${this.verticalTabsOrientationFixed_}">
+         <div class="flex cr-padded-text" aria-hidden="true">
+           $i18n{tabStripPosition}
+         </div>
+@@ -174,7 +174,8 @@
+         </settings-dropdown-menu>
+       </div>
+       <div class="list-frame indented-toggles"
+-          ?hidden="${!this.verticalTabsEnabledPref_?.value}">
++          ?hidden="${!this.verticalTabsOrientationFixed_ &&
++              !this.verticalTabsEnabledPref_?.value}">
+         ${this.showVerticalTabsExpandOnHoverSetting_() ? html`
+           <settings-toggle-button
+               id="showVerticalTabsExpandOnHover"
+diff --git a/chrome/browser/ui/browser_actions.cc b/chrome/browser/ui/browser_actions.cc
+--- a/chrome/browser/ui/browser_actions.cc
++++ b/chrome/browser/ui/browser_actions.cc
+@@ -3,6 +3,8 @@
+ // found in the LICENSE file.
+ 
+ #include "chrome/browser/ui/browser_actions.h"
++
++#include "mb/common/sidebar_policy.h"
+ 
+ #include <memory>
+ #include <optional>
+@@ -1092,6 +1094,8 @@
+           .Build());
+ 
+   if (tabs::IsVerticalTabsFeatureEnabled()) {
++    const bool orientation_fixed = mb::RequiresVerticalSidebar(
++        bwi->GetType() == BrowserWindowInterface::Type::TYPE_NORMAL);
+     root_action_item_->AddChild(
+         actions::ActionItem::Builder(
+             base::BindRepeating(
+@@ -1101,6 +1105,8 @@
+                 },
+                 bwi))
+             .SetActionId(kActionToggleVerticalTabs)
++            .SetEnabled(!orientation_fixed)
++            .SetVisible(!orientation_fixed)
+             .SetText(l10n_util::GetStringUTF16(IDS_SWITCH_TO_VERTICAL_TAB))
+             .Build());
+ 
+diff --git a/chrome/browser/ui/toolbar/app_menu_model.cc b/chrome/browser/ui/toolbar/app_menu_model.cc
+--- a/chrome/browser/ui/toolbar/app_menu_model.cc
++++ b/chrome/browser/ui/toolbar/app_menu_model.cc
+@@ -1200,7 +1200,8 @@
+       this, IDC_NAME_WINDOW, IDS_NAME_WINDOW,
+       features::IsRoundedIconsEnabled() ? kWebAssetIcon : kNameWindowOldIcon);
+ 
+-  if (auto* controller = tabs::VerticalTabStripStateController::From(browser)) {
++  if (auto* controller = tabs::VerticalTabStripStateController::From(browser);
++      controller && !controller->IsOrientationFixed()) {
+     if (controller->ShouldDisplayVerticalTabs()) {
+       AddItemWithStringIdAndVectorIcon(
+           this, IDC_TOGGLE_VERTICAL_TABS, IDS_SWITCH_TO_HORIZONTAL_TAB,
+diff --git a/chrome/browser/ui/tabs/vertical_tab_iph_controller.cc b/chrome/browser/ui/tabs/vertical_tab_iph_controller.cc
+--- a/chrome/browser/ui/tabs/vertical_tab_iph_controller.cc
++++ b/chrome/browser/ui/tabs/vertical_tab_iph_controller.cc
+@@ -13,6 +13,7 @@
+ #include "chrome/common/pref_names.h"
+ #include "components/feature_engagement/public/feature_constants.h"
+ #include "components/prefs/pref_service.h"
++#include "mb/common/sidebar_policy.h"
+ 
+ namespace {
+ // The minimum number of tabs required in the tab strip before the vertical
+@@ -34,6 +35,12 @@
+     BrowserWindowInterface* interface)
+     : browser_window_interface_(interface),
+       scoped_data_(interface->GetUnownedUserDataHost(), *this) {
++  // This onboarding teaches switching from horizontal tabs. Product windows
++  // already fixed to vertical must not observe tabs or schedule that tutorial.
++  if (mb::RequiresVerticalSidebar(
++          interface->GetType() == BrowserWindowInterface::Type::TYPE_NORMAL)) {
++    return;
++  }
+   auto* tab_strip_model = browser_window_interface_->GetTabStripModel();
+   auto* profile_prefs =
+       Profile::FromBrowserContext(tab_strip_model->profile())->GetPrefs();

@@ -4,7 +4,10 @@ Status: the unmodified upstream build and sandboxed Xorg baseline passed.
 The product core and companion compile and pass tests inside Chromium GN.
 Native branding integration and the renamed debug browser's scoped Xorg launch
 passed; see [the product review](product-baseline-2026-09-08.md).
-The custom browser UI and startup service wiring remain pending.
+The bundled local new-tab UI passed seven focused browser tests and a production
+Xorg review. The first product sidebar browser tests and Xorg input checkpoint
+passed; see [sidebar review](sidebar-baseline-2026-09-08.md). Startup service
+wiring remains pending.
 
 ## Product boundary
 
@@ -12,8 +15,9 @@ The intended dependency direction is native product UI → product controllers �
 narrow Chromium integration → existing browser services. Blink, V8, networking,
 sandboxing and site isolation retain their upstream implementations.
 
-The product layer will live under Chromium's `//mb/` and expose windows, tab
-commands, configuration, environments, sidebar state and environment activation.
+The product layer lives under Chromium's `//mb/`. Its current window, tab and
+command adapters query native state on demand. Configuration and environment
+cores are tested; browser startup and environment activation wiring are pending.
 `Browser`, `TabStripModel`, `Profile` and `WebContents` remain authoritative.
 Controllers may project their state into Views; they must not maintain a second
 independent tab collection or implement a new profile/session engine.
@@ -27,10 +31,11 @@ records reproducible GN/build/test receipts. See [integration](product-integrati
 ## Native vertical tabs in the pinned release
 
 Source inspection found an existing Views vertical-tab implementation. The
-integration should reuse its tab projection, drag controller, pinned/group
-views, accessibility and resize behavior, while adding explicit product-owned
-composition and command routing. Enabling an upstream preference alone is not
-the planned product implementation.
+integration reuses its tab projection, drag controller, pinned/group
+views, accessibility and resize behavior, with product-owned composition and
+command routing. `mb::SidebarView` adds manifest identity, private-window text,
+a live tab count and a native browser-command menu. Initial runtime checks
+passed; scale, broader accessibility and state-indicator coverage remain open.
 
 The following paths are relative to the pinned Chromium source:
 
@@ -38,7 +43,7 @@ The following paths are relative to the pinned Chromium source:
 | --- | --- |
 | `chrome/browser/ui/views/frame/browser_view.cc` | Creates the vertical region and switches the active strip with reset/initialize operations; retain the working toolbar and omnibox. |
 | `chrome/browser/ui/views/frame/base_tab_strip_region_view.cc` | Constructs the native root tab projection, collection controller and drag handler from the browser's tab model. |
-| `chrome/browser/ui/views/frame/vertical_tab_strip_region_view.{h,cc}` | Final native host with resize and state delegates; preserve its frame/layout contracts when introducing product composition. |
+| `chrome/browser/ui/views/frame/vertical_tab_strip_region_view.{h,cc}` | Native host with resize and state delegates; the product patch permits subclassing while retaining its frame/layout contracts. |
 | `chrome/browser/ui/views/tabs/common/tab_strip_collection_controller.{h,cc}` | Routes selection, close, reordering, grouping and context menus to authoritative state. |
 | `chrome/browser/ui/tabs/vertical_tab_strip_state_controller.cc` | Persists expanded width and collapsed state using profile preferences and session window data. |
 | `chrome/browser/ui/views/frame/layout/browser_view_tabbed_layout_impl.cc` | Allocates native sidebar space and assumes specific corners, caption exclusions and animation behavior. |
@@ -49,11 +54,21 @@ There must be exactly one active native tab projection.
 violate that contract. Product composition must preserve the existing
 reset/initialize lifecycle.
 
-The first intended seam is product-owned sidebar controls within the existing
-host, keeping its native tab subtree and frame integration. Current top/footer
-containers also provide tab-search anchors and drag-bound calculations. Any
-replacement must preserve or explicitly adapt those contracts. The concrete
-API and narrow patch list must be reviewed against compilation in Phase 3.
+The product header is inserted after the existing top container, preserving its
+tab-search anchor and the bottom container used by drag bounds. Native
+Initialize/ResetTabStrip continues to own the one tab projection. The header
+observes TabStripModel solely to refresh its count; it holds no second tab list.
+BrowserWindowAdapter resolves stable tab handles against the current browser
+model before acting, rejecting stale, detached and foreign-window tabs.
+
+Patch `0004-native-sidebar.patch` touches 18 upstream files. Normal Linux browser
+windows receive the product view and a fixed vertical-orientation policy; popup
+and application window classification remains native. The policy covers the
+controller, command dispatch, action visibility, menus and Settings. It does not
+write a fake preference value or depend on a feature trial to keep tabs vertical.
+Native collapse, hover expansion, resize and session/profile persistence remain
+available. The product command menu routes through Chromium's existing command
+handlers, including real off-the-record window creation and DevTools.
 
 The native implementation has scrolling but eagerly creates child tab views.
 Its responsiveness with 100 tabs remains untested. Existing upstream tests are

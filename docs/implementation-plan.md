@@ -40,8 +40,11 @@ Exit evidence: branding generator tests pass, the renamed browser builds and lau
 
 ## Phase 3: native vertical tabs
 
-Status: active. First integrate a bundled local-only NTP and focused browser tests,
-then native sidebar composition. Each increment must build and pass runtime review.
+Status: active. The bundled local NTP passed seven browser tests and reviewed
+production Ctrl+T/Xorg smoke. Product sidebar composition, live window/command
+adapters and mandatory vertical policy compiled; all 11 focused browser tests
+passed. Onboarding and header geometry fixes passed focused tests; the first
+production visual/input checkpoint passed. Scale and wider coverage follow. Each increment must build and pass runtime review.
 
 Introduce narrow browser/window/tab/command abstractions backed by `Browser`, `TabStripModel`, `Profile`, and `WebContents`. Retain the working omnibox and navigation controls. Replace the visible horizontal strip with a Views sidebar in small compiled increments: tab display and operations; selection and status; pinned tabs/groups/context menus; drag reordering; scrolling and keyboard accessibility; collapse/resize persistence.
 

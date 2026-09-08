@@ -8,7 +8,8 @@ The [reviewed product launch](product-baseline-2026-09-08.md) verifies its limit
 scope. This repository does not yet provide the requested daily-driver browser.
 Custom UI, runtime isolation, extension compatibility, release build and Arch
 packaging remain pending. See the [baseline review](upstream-baseline-2026-09-08.md)
-for the upstream data-URL debug assertion and unverified F12 check. Ctrl+T now
+for the upstream data-URL debug assertion. F12 passed the first sidebar Xorg
+input check; see [sidebar review](sidebar-baseline-2026-09-08.md). Ctrl+T now
 passes the [local NTP gate](local-new-tab.md); the inherited omnibox AI Mode
 affordance and irrelevant Customize Chrome controls remain UI cleanup.
 

@@ -36,3 +36,7 @@
 - Add a focused native browser-test executable and verify authoritative tab operations.
 - Bundle the local manifest-branded new-tab page, preserve native incognito and
   extension override routing, and pass seven browser tests plus reviewed Ctrl+T/Xorg smoke.
+- Add the native product sidebar and live window/tab/command adapters; enforce
+  vertical orientation for normal Linux windows. Pass initial browser tests and
+  reviewed pin/drag/group/collapse/resize/F12/Xorg checks with the sandbox enabled.
+  Correct a visually detected header layout bug and retain all failed evidence.

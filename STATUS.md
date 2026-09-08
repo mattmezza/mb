@@ -2,117 +2,100 @@
 
 Updated: 2026-09-08.
 
-- Current phase: Phase 3, custom native UI. Phase 2 branding launch passed.
-- Last successful browser build: branded debug mb, receipt
-  `.build/logs/product-build-20260908T190956.375119Z.json`.
-  First full product build passed in 10m31s (559 final incremental steps):
-  `.build/logs/product-build-20260908T184734.627427Z.json`.
-- Last successful browser test: sandboxed actual Xorg product launch, navigation,
-  tab shortcuts, docked DevTools Elements, sandbox, manifest identity and clean exit.
-  Reviewed evidence: `.build/test-evidence/product-20260908T191032.883440Z/review.json`.
-  See [product review](docs/product-baseline-2026-09-08.md) for scope and prior failures.
-- Last successful product core tests: 51 Chromium-built C++ tests and 17 companion
-  end-to-end checks; `.build/test-evidence/product-unit-20260908T184731.229729Z/`.
-  Branding (15), integration (8), resolved resource IDs (5), smoke helpers (3)
-  and loopback/media fixtures (5) also passed focused checks. Earlier full
-  standalone run: 107 passed, `standalone-20260908T100704.408098Z/results.json`.
-- Blockers: none currently; installed dependencies verified. No sudo was run.
-- Resources: approximately 81 GiB free disk, 17 GiB available RAM, 25 GiB unused
-  swap. The requested below-100-GiB disk warning was reported. Incremental work
-  fits; recheck capacity before a separate release output or large test build.
-- Repository remote: `git@github.com:mattmezza/mb.git`, branch `main`.
-  Ignored `.build/` holds source, binaries, logs and private test data.
+- Current phase: Phase 3, native custom UI. Phases 1–2 passed. The first sidebar
+  browser/Xorg input checkpoint passed; Phase 3 is not complete.
+- Last successful browser build:
+  `.build/logs/product-build-20260908T205919.455231Z.json`.
+- Last successful browser launch/test: sandboxed Xorg production smoke, normal
+  shutdown exit 0; `.build/test-evidence/product-20260908T211150.370203Z/review.json`.
+- Last focused tests: 11 browser tests passed in 129s before the two small sidebar
+  follow-ups; each follow-up passed all three sidebar tests. Latest:
+  `.build/test-evidence/product-browser-tests-20260908T205809.598441Z/results.json`.
+  Its build: `.build/logs/product-test-build-20260908T205630.672359Z.json`.
+- Product core: 51 Chromium-built C++ tests and 17 companion end-to-end checks
+  passed at `.build/test-evidence/product-unit-20260908T184731.229729Z/`.
+  Latest tool suite: 18 integration/GRIT/runner checks passed at
+  `standalone-20260908T200445.214481Z/results.json`. Earlier full standalone: 107
+  passed at `standalone-20260908T100704.408098Z/results.json`.
+- Blockers: none currently; dependencies installed and verified. No sudo run.
+- Resources: about 81 GiB free disk, 10 GiB available RAM and 24 GiB unused swap
+  during the last UI build. The below-100-GiB warning was reported. Recheck before
+  a separate release output or large test build.
+- Remote: `git@github.com:mattmezza/mb.git`, branch `main`. `.build/` is ignored.
   Unrelated root `test/pages/README.md` and `.tmux-session` remain untouched.
 
-## Exact pending work
+## Current checkpoint and next work
 
-Prepare and review a bundled local-only NTP controller, preserving genuine OTR
-and extension override behavior; build and test before native sidebar changes.
-Add a focused real-browser test executable and tab operation tests. Then wire
-product window/command/sidebar composition to Chromium's authoritative model,
-including pinned/grouped/dragged tabs, status, accessibility and persistence.
+The native product SidebarView has a compact manifest header, live tab count,
+command menu and one TabStripModel projection. Fixed vertical policy covers
+normal Linux windows, commands, menus and Settings. The first reviewed Xorg
+checks cover tab creation/selection, pinning, drag reorder, close/reopen, native
+groups, collapse/expand, mouse resize, F12 DevTools and sandbox protection.
+See [the dated sidebar review](docs/sidebar-baseline-2026-09-08.md) for exact
+scope, screenshots, build failures, the corrected header layout bug and two
+scratch input-harness cleanup failures. Clean exit comes from the final,
+separate production smoke against the identical binary.
 
-The TOML parser, environment path auditing and control executable are implemented
-and compiled, but browser startup still does not consume configuration. Early
-startup wiring, native ProcessSingleton isolation checks and GURL validation
-remain Phase 4 work. Preserve original argc/argv backing for Linux process titles.
+Next: add the prepared 100-tab measurement and broader DevTools tests, compile
+and run them. Finish sidebar keyboard/accessibility and loading/crash/audio/mute
+coverage. Remove inherited AI Mode/unsupported customization affordances and
+route local NTP favicon requests to the generated original product artwork.
+Each integration must compile and pass focused runtime/visual checks.
 
-Capability preservation (incognito persistence, extensions, broader DevTools,
-downloads/history/bookmarks/passwords/media/restoration), release-mode build,
-Arch package and maintenance rehearsal remain pending. No daily-driver alpha
-claim has been made.
-
-Focused browser-test compilation passed in 34m57s (2,925 actions), receipt
-`.build/logs/product-test-build-20260908T191448.591365Z.json`. Matching no-op
-receipt: `.build/logs/product-test-build-20260908T195158.091571Z.json`.
-The focused browser test passed on actual X11 in 12 seconds:
-`.build/test-evidence/product-browser-tests-20260908T195515.267037Z/results.json`,
-build receipt `.build/logs/product-test-build-20260908T195439.628520Z.json`.
-It checks native tab creation, activation, reordering, navigation and closing.
-The first attempt failed before assertions because TMPDIR exceeded Linux's Unix
-socket limit. Its log and scoped cleanup record remain at
-`.build/test-evidence/product-browser-tests-20260908T195234.345213Z/`.
-The corrected runner uses a short 0700 TMPDIR and checks socket path capacity;
-five runner regression tests pass. This harness result supplements the actual
-production launch gate; it does not establish the remaining UI capabilities.
-
-The local NTP controller and six browser tests now pass alongside the tab baseline:
-seven tests passed in 76 seconds on actual X11. Evidence:
-`.build/test-evidence/product-browser-tests-20260908T201439.291090Z/results.json`.
-Test build receipt: `.build/logs/product-test-build-20260908T201307.396973Z.json`.
-GN header checks and three smoke-helper tests pass. Integration/runner tool suite
-also passed (18 tests), receipt `standalone-20260908T200445.214481Z/results.json`.
-
-The first NTP integration builds corrected generated-string conversion, renamed
-Browser accessors and a Linux compile-time policy guard. Failed browser suites
-are preserved at `product-browser-tests-20260908T200425.347912Z` and
-`product-browser-tests-20260908T201001.372254Z`: tests incorrectly used the visible
-NTP URL alias, checked type metadata absent from the native legacy controller,
-and expected a CSS link which GRIT inlines. The final suite passes without
-weakening browser checks or changing native incognito/extension security.
-
-Production build and reviewed Ctrl+T/Xorg gate passed:
-`.build/logs/product-build-20260908T201640.499308Z.json`,
-`.build/test-evidence/product-20260908T201725.564345Z/review.json`.
-The local page, tabs, DevTools and sandbox were visibly reviewed; normal exit 0.
-Horizontal tabs remain pending replacement. Native omnibox AI Mode affordance
-and irrelevant Customize Chrome controls remain UI cleanup. Reproduction:
+Exact next integration/build commands, after reviewing/copying the scratch tests
+and adding their documented GN sources/dependencies:
 
 ```sh
-python3 mb/tools/product.py build --jobs 12
-python3 mb/tools/product_smoke.py --build-receipt .build/logs/<successful-product-build>.json --local-ntp
+python3 mb/tools/product.py prepare
+python3 mb/tools/product.py gen
+python3 mb/tools/product.py test-build --targets mb:mb_browser_tests --jobs 12
+python3 mb/tools/browser_tests.py --build-receipt .build/logs/<successful-test-build>.json --filter 'MbSidebarScaleBrowserTest.*:MbDevToolsBrowserTest.*'
 ```
 
-Next stage the product sidebar/window adapter and
-mandatory vertical policy, then compile and run focused browser tests again.
+No owned test browser or build is running at this checkpoint. Do not launch old
+`out/mb-debug/chrome`: shared libraries/resources now contain product integration.
 
-## Completed gates and maintenance notes
+## Later phases
+
+The TOML parser, environment path auditing and control executable are compiled
+and tested, but browser startup does not consume configuration yet. Phase 4
+must wire raw argv normalization before CommandLine initialization, explicit
+configuration/root selection before Profile/ProcessSingleton setup, then XDG
+lifecycle, UI settings, environment activation and actual isolation tests.
+Preserve original argc/argv backing for Linux process titles and native locks.
+
+Full extension/DevTools/incognito persistence, ordinary capabilities, release
+mode, Arch package installation and upstream-update rehearsal remain pending.
+No daily-driver alpha claim has been made. Security protections remain enabled.
+
+## Prepared scratch drafts (uncompiled unless stated)
+
+- 100-tab measurement: `.build/tmp/sidebar-scale-20260908T`.
+- DevTools: `.build/tmp/devtools-tests-20260908T`.
+- AI/customization UI: `.build/tmp/omnibox-ui-20260908T-a`.
+- Local NTP favicon: `.build/tmp/ntp-favicon-bVvuxn`.
+- Raw startup arguments: `.build/tmp/startup-argv-6ghiymnt`.
+- Explicit configuration gate: `.build/tmp/browser-config-gate-814cb32j`.
+- Config error harness: `.build/tmp/config-gate-runner-w4oioC` (four pure Python
+  harness tests pass; no browser execution).
+- MV3 capability tests/fixture hooks: `.build/tmp/extensions-capability-20260908T`.
+- Incognito cookie/history tests: `.build/tmp/incognito-tests-voabnycf`.
+- Sidebar accessibility/keyboard draft: agent preparation in progress.
+
+Scratch recipes/helpers are review aids, not accepted browser implementations.
+Use successful build receipts matching the exact current staged integration.
+
+## Earlier gates
 
 Unmodified Chromium 152.0.7977.82, commit
-`d04cdb24d67b081f6cf80200ffc5233f44b61109`, built successfully before any source
-integration. Final baseline run: 6h45m16s, 26,086 completed actions. Receipt:
-`.build/logs/upstream-build-20260908T112027.558220Z.json`; reviewed Xorg evidence:
-`.build/test-evidence/upstream-20260908T181043.265925Z/review.json`.
-See [upstream review](docs/upstream-baseline-2026-09-08.md).
+`d04cdb24d67b081f6cf80200ffc5233f44b61109`, built and passed sandboxed Xorg review
+before product source integration. Baseline build:
+`.build/logs/upstream-build-20260908T112027.558220Z.json` (final 12-job run 6h45m16s).
+See [upstream review](docs/upstream-baseline-2026-09-08.md),
+[branding review](docs/product-baseline-2026-09-08.md), and
+[local NTP implementation](docs/local-new-tab.md).
 
-Product integration checks pinned revisions and all 165 nested Git dependencies,
-refuses unrelated edits, stages generated branding, and records hashes. Native
-strings alias Chromium's GN-resolved resource-ID map; all locale repacks passed.
-Real generated credits include toml++. Retiring a patch restores pinned source;
-retiring owned generated files archives them. Manifest-only regeneration is tested.
-
-Known upstream issue: typing percent-encoded data HTML triggered a debug omnibox
-DCHECK; base64 fixtures pass. Initial product smoke had a post-DevTools navigation
-timeout; two diagnostic retries passed, without a proven timing root cause.
-F12 remains unverified. Ctrl+T now passes the local-only NTP gate.
-
-Scoped toml++ unsafe-buffer diagnostics are suppressed only around its vendor
-include; parser limits and runtime hardening remain. No sandbox, certificate,
-same-origin or site-isolation protection has been disabled.
-
-Scratch drafts awaiting sequential staging: local NTP at
-`.build/tmp/ntp-work-z97_2drb`, expanded tests at
-`.build/tmp/ntp-protection-work-20260908T`, window adapter at
-`.build/tmp/window-layer-work-20260908T`, product header at
-`.build/tmp/sidebar-work-swh82m0q`, and vertical policy at
-`.build/tmp/sidebar-policy-5pguzvip`. Each requires compilation and runtime review.
+Integration verifies pinned revisions and 165 nested Git dependencies, refuses
+unrelated edits, stages manifest-derived resources with unchanged native GRIT
+IDs, and records build/test hashes. Real credits include toml++. No sandbox,
+certificate, same-origin or site-isolation protection has been disabled.
