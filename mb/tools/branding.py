@@ -121,7 +121,7 @@ def render(manifest):
     for key in sorted(product):
         messages.append(f'  <message name="IDS_PRODUCT_{key.upper()}" desc="Product branding value for {key}.">{escaped[key]}</message>')
     messages += ["</grit-part>", ""]
-    desktop = "\n".join(["[Desktop Entry]", "Type=Application", f"Name={desktop_string(product['full_name'])}", f"Comment={desktop_string(product['description'])}", f"Exec=\"{product['executable_name']}\" %U", f"Icon={product['short_name']}", "Terminal=false", "Categories=Network;WebBrowser;", f"MimeType=text/html;application/xhtml+xml;x-scheme-handler/http;x-scheme-handler/https;x-scheme-handler/{product['url_scheme']};", f"StartupWMClass={product['application_id']}", ""])
+    desktop = "\n".join(["[Desktop Entry]", "Type=Application", f"Name={desktop_string(product['full_name'])}", f"Comment={desktop_string(product['description'])}", f"Exec=\"{product['executable_name']}\" %U", f"Icon={product['short_name']}", "Terminal=false", "Categories=Network;WebBrowser;", "MimeType=text/html;application/xhtml+xml;x-scheme-handler/http;x-scheme-handler/https;", f"StartupWMClass={product['application_id']}", ""])
     branding = "\n".join([
         f"COMPANY_FULLNAME={product['full_name']}",
         f"COMPANY_SHORTNAME={product['short_name']}",

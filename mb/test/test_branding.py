@@ -68,9 +68,10 @@ class BrandingTest(unittest.TestCase):
         self.assertIn('Exec="mb" %U', desktop)
         self.assertIn(
             "MimeType=text/html;application/xhtml+xml;x-scheme-handler/http;"
-            "x-scheme-handler/https;x-scheme-handler/mb;",
+            "x-scheme-handler/https;",
             desktop,
         )
+        self.assertNotIn("x-scheme-handler/mb;", desktop)
         self.assertIn("namespace mb::branding", (first / "branding.h").read_text())
         validator = shutil.which("desktop-file-validate")
         if validator:

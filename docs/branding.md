@@ -24,8 +24,10 @@ or signing support.
 
 The manifest validates exact keys and types,
 rejects control characters and unsafe identifier/file values, and creates the
-desktop entry's quoted executable with `%U`, plus HTML, XHTML, HTTP, HTTPS, and
-custom scheme-handler metadata. GN output escapes literal dollar signs so manifest
+desktop entry's quoted executable with `%U`, plus HTML, XHTML, HTTP and HTTPS
+handler metadata. The manifest's custom URL scheme is reserved and exported in
+generated values; the desktop entry does not register it before a corresponding
+browser protocol handler exists. GN output escapes literal dollar signs so manifest
 text cannot interpolate GN variables. Legacy `BRANDING` values feed raw GN scope
 substitution and quoted C++ macros, so `product.full_name` rejects double quotes,
 backslashes, dollar signs, and `@` rather than attempting unsafe escaping. Every
