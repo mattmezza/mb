@@ -1,0 +1,14 @@
+{
+  "manifest_version": 3,
+  "name": "Browser capability fixture",
+  "version": "0.1.0",
+  "description": "Local manual fixture for extension capability checks.",
+  "action": {"default_title": "Browser capability fixture", "default_popup": "popup.html"},
+  "background": {"service_worker": "background.js"},
+  "permissions": ["storage"],
+  "content_scripts": [{
+    "matches": ["http://127.0.0.1/*", "http://localhost/*"],
+    "js": ["content.js"],
+    "run_at": "document_idle"
+  }]
+}
