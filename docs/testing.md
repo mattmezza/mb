@@ -363,6 +363,21 @@ the production executable's raw `chrome_main.cc` entry point, so early argument
 handling needs its standalone tests and real executable smoke tests. This target
 has not yet been generated or linked; it is the selected integration approach.
 
+The harness still runs the real `ChromeMainDelegate::BasicStartupComplete()` and
+`PreSandboxStartup()`. Its `SetUpUserDataDirectory()` hook runs after Chromium
+has created/overridden the temporary user-data root and before those callbacks.
+Use that hook to write an explicit fixture TOML, select an environment pointing
+at the same root, and append `--config`/`--environment` through CommandLine's
+typed switch methods. The temporary root exists at this point; the Profile does
+not. Tests must exercise the production validator rather than bypass its gate.
+
+The harness redirects XDG cache storage but does not redirect `XDG_CONFIG_HOME`.
+Always supply the fixture config explicitly so tests cannot read the desktop
+user's real configuration. `SetUpOnMainThread()` and local-state preference
+setup are too late for this early gate. Renderer/utility test processes skip
+fixture setup, so product configuration initialization must remain browser-only.
+Any auxiliary `--launch-as-browser` test process needs its own explicit inputs.
+
 ## Local capability fixtures
 
 ```sh
