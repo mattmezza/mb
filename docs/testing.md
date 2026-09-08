@@ -304,3 +304,23 @@ The parser's vendor patch was applied to a disposable copy of its pinned
 upstream single header and reproduced the checked-in header byte for byte.
 These results establish standalone behavior only; they do not establish browser
 isolation, sandboxing, extension compatibility, or a working product UI.
+
+## Local capability fixtures
+
+```sh
+python3 mb/tools/serve_test_pages.py --port 8000
+```
+
+Open `http://127.0.0.1:8000/` in the dedicated test browser. The server exposes
+only fixed fixture routes, binds only loopback, and suppresses request logs.
+The page can write/read fixed work/personal markers in cookies, localStorage,
+and IndexedDB; clear only those fixture keys; download fixed text; play a local
+one-second WAV; and request location permission after an explicit button click.
+It does not store or display coordinates. Use the same origin in both browser
+environments when comparing storage; different ports are different origins.
+
+The [MV3 extension protocol](../mb/test/extensions/README.md) uses this page.
+Its unpacked code has passed JSON/scope and Node syntax checks. The fixture
+server's four route/content tests pass with
+`python3 -m unittest mb.test.test_fixture_server -v`. Browser behavior for both
+fixtures is pending; JavaScript syntax checks are not runtime verification.

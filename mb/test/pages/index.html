@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Browser capability fixture</title>
+</head>
+<body>
+  <main>
+    <h1>Browser capability fixture</h1>
+    <p>Use this page to exercise a small, bounded set of browser capabilities.</p>
+
+    <section aria-labelledby="storage-heading">
+      <h2 id="storage-heading">Storage marker</h2>
+      <form id="marker-form">
+        <label for="marker">Marker</label>
+        <select id="marker" name="marker">
+          <option value="work">work</option>
+          <option value="personal">personal</option>
+        </select>
+        <button type="submit">Store marker</button>
+        <button type="button" id="clear-storage">Clear fixture storage</button>
+      </form>
+      <p id="storage-status" role="status">Storage ready.</p>
+      <dl>
+        <div><dt>localStorage</dt><dd id="local-value">Not stored</dd></div>
+        <div><dt>cookie</dt><dd id="cookie-value">Not stored</dd></div>
+        <div><dt>IndexedDB</dt><dd id="indexeddb-value">Not stored</dd></div>
+      </dl>
+    </section>
+
+    <section aria-labelledby="download-heading">
+      <h2 id="download-heading">Download and audio</h2>
+      <p><a href="/download.txt" download>Download fixed text</a></p>
+      <audio controls preload="metadata" src="/tone.wav">
+        Your browser does not support audio controls.
+      </audio>
+    </section>
+
+    <section aria-labelledby="location-heading">
+      <h2 id="location-heading">Geolocation</h2>
+      <button type="button" id="request-location">Request geolocation permission</button>
+      <p id="location-status" role="status">No request made.</p>
+    </section>
+  </main>
+  <script src="/fixture.js"></script>
+</body>
+</html>

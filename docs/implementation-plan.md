@@ -14,6 +14,8 @@ This plan describes pending work. `STATUS.md` records the current phase, exact r
 
 ## Phase 0: discovery and reproducibility setup
 
+Status: completed on 2026-09-08; dependencies installed and verified.
+
 Record machine and repository inspection, verify official Linux stable metadata and its exact Git tag/commit, and save the pin in `mb/upstream-version.toml`. Create fetch/build orchestration and the written progress record. Request the missing official Arch package `gperf`; wait for the user's installation confirmation, then verify it.
 
 Exit evidence: recorded upstream identity and inspection results; required packages verified. Discovery is described in [the machine record](discovery-2026-09-08.md).
@@ -24,7 +26,7 @@ Fetch using `depot_tools` and the exact Chromium pin. Inspect requirements from 
 
 Compile unmodified Chromium. Launch under the real Xorg session with Ozone's X11 backend and the sandbox enabled, using a dedicated test user-data root. Record exact GN arguments, commands, build output, sandbox evidence, and startup/shutdown results. Do not use `--no-sandbox`.
 
-Exit evidence: successful upstream compilation, functional Xorg browser window, verified sandbox, clean shutdown. Product implementation remains gated until these checks pass.
+Exit evidence: successful upstream compilation, functional Xorg browser window, verified sandbox, clean shutdown. Product integration remains gated until these checks pass. Independently compiled product libraries and test fixtures may be prepared outside the unmodified checkout.
 
 ## Phase 2: product skeleton and identity
 

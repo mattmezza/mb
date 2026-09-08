@@ -10,7 +10,7 @@ titles, history, or page contents.
 Run a loopback page in a separate terminal:
 
 ```sh
-python3 -m http.server 8000 --bind 127.0.0.1
+python3 mb/tools/serve_test_pages.py --port 8000
 ```
 
 In the browser's extensions page, enable developer mode, choose **Load
