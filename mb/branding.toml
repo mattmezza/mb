@@ -1,0 +1,12 @@
+# This is the single source of truth for temporary product identity.
+schema_version = 1
+
+[product]
+short_name = "mb"
+full_name = "mb"
+executable_name = "mb"
+profile_directory_name = "mb"
+url_scheme = "mb"
+description = "Matteo's Browser"
+application_id = "com.matteo.mb"
+desktop_file_name = "mb.desktop"
