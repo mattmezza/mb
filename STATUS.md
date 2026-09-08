@@ -31,6 +31,11 @@ This command is already running; inspect its log before starting another build:
 It runs pinned `autoninja -C out/mb-debug -j 12 chrome` from `.build/chromium/src`.
 The successful receipt will be written beside the log and include the binary hash.
 
+Checkpoint 2026-09-08 12:37 UTC: the twelve-job run has completed
+more than 3,000 actions and is compiling Blink core. The active log has no
+compiler failure markers. Source remains unmodified; no browser binary has
+completed its build or launch gate.
+
 Pinned Linux stable: Chromium 152.0.7977.82,
 `d04cdb24d67b081f6cf80200ffc5233f44b61109`. Source and all 165 Git dependencies
 were verified before compilation. Hooks passed in
@@ -50,8 +55,8 @@ more actions in 14m08s, with zero compiler failures, before the final increase t
 twelve jobs. Its intentional-interruption receipt is
 `upstream-build-20260908T110604.504034Z.json`. Completed outputs were preserved.
 
-Latest resource check: approximately 99.6 GiB free disk, 9.4 GiB available RAM,
-28 GiB unused swap, low memory pressure. Total RAM is 30.8 GiB and total swap
+Latest resource check: approximately 98.8 GiB free disk, 7 GiB available RAM,
+25 GiB unused swap, low memory pressure. Total RAM is 30.8 GiB and total swap
 47 GiB. The laptop is on AC power; CPU policy caps performance cores at 2 GHz.
 The requested 100 GiB free-space warning threshold has been crossed during
 compilation; the user was informed. Capacity is not currently blocking this
