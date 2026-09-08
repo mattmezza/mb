@@ -131,5 +131,26 @@
     );
   });
 
+  const video = document.querySelector('#pattern-video');
+  const videoStatus = document.querySelector('#video-status');
+  video.addEventListener('loadedmetadata', () => {
+    videoStatus.textContent = 'Video loaded.';
+  });
+  video.addEventListener('playing', () => {
+    videoStatus.textContent = 'Video playing.';
+  });
+  video.addEventListener('pause', () => {
+    if (!video.ended) videoStatus.textContent = 'Video paused.';
+  });
+  video.addEventListener('ended', () => {
+    videoStatus.textContent = 'Video ended.';
+  });
+  video.addEventListener('error', () => {
+    videoStatus.textContent = 'Video could not be loaded or played.';
+  });
+  if (video.readyState >= video.HAVE_METADATA) {
+    videoStatus.textContent = 'Video loaded.';
+  }
+
   refreshValues().catch((error) => setStorageStatus(`Storage error: ${error.message}`));
 })();

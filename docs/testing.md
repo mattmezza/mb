@@ -27,6 +27,10 @@ DevTools and `chrome://sandbox`. Inspect additional owned DevTools windows if
 undocked. A screenshot filename or the automated exit code alone does not pass
 those checks. Record the browser-reported sandbox conclusion together with
 the collected renderer kernel state before allowing product integration.
+The driver excludes `CHROME_EXTRA_FLAGS` and channel variants from the test
+child's environment because Chromium would otherwise append unrecorded switches.
+Only excluded variable names are recorded; their values and the parent process's
+environment remain untouched.
 
 The operator must create an evidence directory for this run and record the exact
 binary before launch. Replace the example timestamp with the actual UTC start
@@ -361,12 +365,14 @@ Open `http://127.0.0.1:8000/` in the dedicated test browser. The server exposes
 only fixed fixture routes, binds only loopback, and suppresses request logs.
 The page can write/read fixed work/personal markers in cookies, localStorage,
 and IndexedDB; clear only those fixture keys; download fixed text; play a local
-one-second WAV; and request location permission after an explicit button click.
+one-second WAV and an original two-second VP8 WebM; and request location permission
+after an explicit button click. The video uses native controls without autoplay.
+Its 48 frames decode successfully with FFmpeg; browser playback remains pending.
 It does not store or display coordinates. Use the same origin in both browser
 environments when comparing storage; different ports are different origins.
 
 The [MV3 extension protocol](../mb/test/extensions/README.md) uses this page.
 Its unpacked code has passed JSON/scope and Node syntax checks. The fixture
-server's four route/content tests pass with
+server's five route/content tests pass with
 `python3 -m unittest mb.test.test_fixture_server -v`. Browser behavior for both
 fixtures is pending; JavaScript syntax checks are not runtime verification.

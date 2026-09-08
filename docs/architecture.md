@@ -68,8 +68,14 @@ product code must not replace either with ad hoc locks or history deletion.
 Source inspection identified these startup seams, still awaiting integration:
 
 - Normalize original arguments in `chrome/app/chrome_main.cc` before
-  `CommandLine::Init()`. Keep their backing storage alive throughout ChromeMain;
-  paired selectors cannot reliably be recovered after Chromium parses argv.
+  its existing `CommandLine::Init()` call, using the string-vector overload.
+  It copies the normalized strings. Keep `ContentMainParams.argc/argv` and their
+  original bytes unchanged: Linux process-title initialization expects the real
+  contiguous argv/environment memory, not heap-owned replacement strings.
+  ContentMain's later command-line initialization is a no-op; process dispatch
+  uses the global normalized copy. Paired selectors cannot reliably be recovered
+  after Chromium parses argv. Do not reset an already initialized command line
+  in test/embedding entry paths or mutate the environment during normalization.
 - Resolve configuration and the selected root in
   `ChromeMainDelegate::BasicStartupComplete()`, for the browser process only,
   after its remote-debugging-pipe descriptor validation and before profile

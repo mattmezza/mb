@@ -8,6 +8,8 @@ Updated: 2026-09-08.
 - Last successful product test: all 107 standalone tests passed with pinned Python
   on 2026-09-08. Command: `.build/depot_tools/python-bin/python3 mb/tools/test_product.py`.
   Receipt and per-command logs: `.build/test-evidence/standalone-20260908T100704.408098Z/results.json`.
+  Subsequent media addition: five fixture tests pass; the original VP8 test
+  clip is deterministic and all 48 frames decode with FFmpeg. Browser playback is pending.
 - Blockers: none currently. Dependencies, including user-installed gperf, are verified.
 - Repository: reviewed preparation is pushed to `https://github.com/mattmezza/mb`
   on `main`. Source, binaries, logs and test data remain under ignored `.build/`.
@@ -54,6 +56,8 @@ Use `.build/tmp` for build scratch. Recheck resources before each milestone.
   Remembered-name persistence and browser configuration consumption remain pending.
 - Loopback capability pages and an unpacked MV3 fixture. Extension JavaScript is
   syntax-checked; no extension runtime behavior has been verified.
+- An unrelated root-level `test/pages/README.md` appeared during work; its
+  provenance is unconfirmed. It is preserved and excluded from product commits.
 - PID-scoped Xorg smoke driver with executable, process-title and kernel sandbox
   checks. It has not launched a browser; screenshots require explicit visual review.
 

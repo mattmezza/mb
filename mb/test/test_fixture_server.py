@@ -66,6 +66,14 @@ class FixtureServerTest(unittest.TestCase):
         self.assertEqual(body[8:12], b"WAVE")
         self.assertGreater(len(body), 16000)
 
+    def test_video_is_fixed_webm(self):
+        status, headers, body = self.get("/pattern.webm")
+        self.assertEqual(status, 200)
+        self.assertEqual(headers["Content-Type"], "video/webm")
+        self.assertEqual(headers["Content-Length"], str(len(SERVER.PATTERN_WEBM)))
+        self.assertEqual(body, SERVER.PATTERN_WEBM)
+        self.assertEqual(body[:4], b"\x1a\x45\xdf\xa3")
+
 
 if __name__ == "__main__":
     unittest.main()

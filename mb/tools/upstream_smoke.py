@@ -113,8 +113,16 @@ def main():
         argv = [str(BINARY), "--ozone-platform=x11", f"--user-data-dir={profile}",
                 "--no-first-run", "--no-default-browser-check", "about:blank"]
         result["argv"] = argv
+        # Chromium appends these environment-provided switches after parsing
+        # argv. A controlled baseline must use only its recorded launch flags.
+        ignored_flags = sorted(name for name in os.environ
+                               if name.startswith("CHROME_EXTRA_FLAGS"))
+        launch_environment = {name: value for name, value in os.environ.items()
+                              if name not in ignored_flags}
+        result["ignored_extra_flags_variables"] = ignored_flags
         log = (evidence / "browser.log").open("x")
         browser = subprocess.Popen(argv, stdout=log, stderr=subprocess.STDOUT,
+                                   env=launch_environment,
                                    start_new_session=True)
         result["pid"] = browser.pid
 

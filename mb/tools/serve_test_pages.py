@@ -14,6 +14,7 @@ PAGE_DIR = pathlib.Path(__file__).resolve().parent.parent / "test" / "pages"
 INDEX_HTML = (PAGE_DIR / "index.html").read_bytes()
 with (PAGE_DIR / "fixture.js").open("rb") as fixture_file:
     FIXTURE_JS = fixture_file.read()
+PATTERN_WEBM = (PAGE_DIR / "pattern.webm").read_bytes()
 
 DOWNLOAD_TEXT = b"Browser capability fixture download.\n"
 
@@ -49,6 +50,7 @@ class FixtureHandler(BaseHTTPRequestHandler):
             "/fixture.js": (FIXTURE_JS, "text/javascript; charset=utf-8", None),
             "/download.txt": (DOWNLOAD_TEXT, "text/plain; charset=utf-8", 'attachment; filename="browser-capability-fixture.txt"'),
             "/tone.wav": (TONE_WAV, "audio/wav", None),
+            "/pattern.webm": (PATTERN_WEBM, "video/webm", None),
         }
         response = routes.get(self.path)
         if response is None:

@@ -30,11 +30,16 @@
     </section>
 
     <section aria-labelledby="download-heading">
-      <h2 id="download-heading">Download and audio</h2>
+      <h2 id="download-heading">Download and media</h2>
       <p><a href="/download.txt" download>Download fixed text</a></p>
       <audio controls preload="metadata" src="/tone.wav">
         Your browser does not support audio controls.
       </audio>
+      <p id="video-label">Generated video pattern</p>
+      <video id="pattern-video" controls preload="metadata" src="/pattern.webm" aria-labelledby="video-label" aria-describedby="video-status">
+        Your browser does not support video controls.
+      </video>
+      <p id="video-status" role="status">Video has not loaded.</p>
     </section>
 
     <section aria-labelledby="location-heading">
