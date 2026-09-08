@@ -65,14 +65,56 @@ different process. An environment is not a profile inside a shared data root.
 Chromium's singleton and off-the-record profile behavior must be preserved;
 product code must not replace either with ad hoc locks or history deletion.
 
+Source inspection identified these startup seams, still awaiting integration:
+
+- Normalize original arguments in `chrome/app/chrome_main.cc` before
+  `CommandLine::Init()`. Keep their backing storage alive throughout ChromeMain;
+  paired selectors cannot reliably be recovered after Chromium parses argv.
+- Resolve configuration and the selected root in
+  `ChromeMainDelegate::BasicStartupComplete()`, for the browser process only,
+  after its remote-debugging-pipe descriptor validation and before profile
+  initialization. Preserve the existing security guards and child-process path.
+- Set the authoritative `--user-data-dir` before `PreSandboxStartup()` calls
+  `InitializeUserDataDir()`. Singleton creation follows in
+  `PostEarlyInitialization()`. Browser-main-parts hooks are too late for this.
+
+The standalone runtime snapshot supplies validated configuration and selection;
+it does not create directories or substitute for the native singleton. Browser
+integration must separately validate startup URLs with Chromium's URL parser,
+prepare only the selected root, and retain genuine `--incognito` behavior.
+
 ## Configuration and identity
 
 One versioned branding manifest supplies generated product identity inputs.
 A separate strict, versioned TOML parser and directory core are implemented and
 tested in isolation, with a compiled control command for validation and path
 inspection. Their browser integration is pending. Native sidebar persistence
-already exists; configuration precedence and runtime persistence must be
-specified together to avoid two competing stores or overwriting user edits.
+already exists. The selected precedence policy keeps TOML read-only: changed
+configured width/collapse values override startup state, while unchanged values
+permit native saved window state and interactive resizing to survive restarts.
+
+The initial-state seam is immediately before `VerticalTabStripStateController`
+construction in `BrowserWindowFeatures::Init()`. Native session restoration
+supplies per-window width/collapse; ordinary new windows can fall back to profile
+preferences. Controller changes persist both kinds of state. The later embedder
+features hook runs too late to substitute constructor state, and collapse
+requests before the View installs its delegate do nothing.
+
+Product profile markers will compare configured width and collapse separately,
+once per original profile per process. Changed fields must apply to every window
+in the startup restore batch, then yield to native persistence. A session-restored
+callback plus an explicit no-restore startup completion path can end that batch.
+Subsequent manual reopening retains its saved window state. Marker/session writes
+are asynchronous and must not be described as an atomic transaction. Incognito
+window state must not be written to the normal session store.
+
+Close-button visibility is centralized in native `TabView::IsChildVisible()`;
+there is no existing preference for the requested switch. Product integration
+will preserve the native close callback and conditional visibility when enabled,
+and suppress the button when disabled. Browser light/dark/system selection can
+use `ThemeService::SetBrowserColorScheme()` rather than writing its preference
+directly; the service also handles Linux theme-provider changes. These policies
+and hooks have not yet been compiled into the browser.
 
 ## Evidence
 
