@@ -42,3 +42,7 @@ After source bootstrap and hooks, run the standalone product checks with:
 Use `--list` to inspect commands or `--suite` to select focused checks. The
 [test record](docs/testing.md) distinguishes these results from pending browser
 runtime verification.
+
+Use `python3 mb/tools/check_upstream.py` to report the official Linux stable
+candidate without changing source or pins. The [update procedure](docs/upstream-updates.md)
+records the maintenance gates and work still required to rehearse a full update.

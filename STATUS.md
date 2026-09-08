@@ -10,6 +10,10 @@ Updated: 2026-09-08.
   Receipt and per-command logs: `.build/test-evidence/standalone-20260908T100704.408098Z/results.json`.
   Subsequent media addition: five fixture tests pass; the original VP8 test
   clip is deterministic and all 48 frames decode with FFmpeg. Browser playback is pending.
+  Latest focused run: 21 upstream-tool tests passed, including 12 candidate-checker
+  tests, in `.build/test-evidence/standalone-20260908T111509.757071Z/results.json`.
+  Live candidate verification matches the current pin; evidence is under
+  `.build/update-checks/20260908T111527.423218Z/`.
 - Blockers: none currently. Dependencies, including user-installed gperf, are verified.
 - Repository: reviewed preparation is pushed to `https://github.com/mattmezza/mb`
   on `main`. Source, binaries, logs and test data remain under ignored `.build/`.
@@ -19,12 +23,12 @@ Updated: 2026-09-08.
 ## Active build
 
 ```sh
-python3 mb/tools/upstream.py build --jobs 8
+python3 mb/tools/upstream.py build --jobs 10
 ```
 
 This command is already running; inspect its log before starting another build:
-`.build/logs/upstream-build-20260908T084625.389068Z.log`.
-It runs pinned `autoninja -C out/mb-debug -j 8 chrome` from `.build/chromium/src`.
+`.build/logs/upstream-build-20260908T110604.504034Z.log`.
+It runs pinned `autoninja -C out/mb-debug -j 10 chrome` from `.build/chromium/src`.
 The successful receipt will be written beside the log and include the binary hash.
 
 Pinned Linux stable: Chromium 152.0.7977.82,
@@ -38,9 +42,12 @@ symbols 1, Blink/V8 symbols 0, local Siso, X11 enabled, unbranded upstream defau
 The first four-job run was intentionally interrupted after 40m54s, with 9,901
 completed actions and no compiler failures, to resume at eight jobs. Its exit-1
 receipt is `upstream-build-20260908T080510.178925Z.json`; it is not a successful
-build receipt. Completed outputs were preserved.
+build receipt. The eight-job run was then intentionally interrupted after 2h19m28s,
+with 17,864 additional completed actions, zero compiler failures and 33,098 remaining,
+to resume at ten jobs after the heavy V8 compilation finished. Its exit-1 receipt is
+`upstream-build-20260908T084625.389068Z.json`. Completed outputs were preserved.
 
-Latest resource check: approximately 105 GiB free disk, 9.7 GiB available RAM,
+Latest resource check: approximately 101 GiB free disk, 10 GiB available RAM,
 28 GiB unused swap, low memory pressure. Total RAM is 30.8 GiB and total swap
 47 GiB. The laptop is on AC power; CPU policy caps performance cores at 2 GHz.
 Use `.build/tmp` for build scratch. Recheck resources before each milestone.
@@ -60,6 +67,9 @@ Use `.build/tmp` for build scratch. Recheck resources before each milestone.
   provenance is unconfirmed. It is preserved and excluded from product commits.
 - PID-scoped Xorg smoke driver with executable, process-title and kernel sandbox
   checks. It has not launched a browser; screenshots require explicit visual review.
+- Read-only stable candidate checker and upstream update procedure. Packaging
+  must generate real credits and explicitly build/install the sandbox helper;
+  those product integrations and the release/package rehearsal remain pending.
 
 See [testing](docs/testing.md) for individual checks and
 [known limitations](docs/known-limitations.md) for remaining capability limits.
@@ -69,7 +79,7 @@ See [testing](docs/testing.md) for individual checks and
 After the active compile succeeds, verify the successful receipt and run:
 
 ```sh
-python3 mb/tools/upstream_smoke.py --build-receipt .build/logs/upstream-build-20260908T084625.389068Z.json
+python3 mb/tools/upstream_smoke.py --build-receipt .build/logs/upstream-build-20260908T110604.504034Z.json
 ```
 
 Inspect the resulting screenshots and record navigation, DevTools, browser-reported

@@ -10,7 +10,7 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[2]
 SUITES = {
-    "upstream-tools": [["-m", "unittest", "mb.test.test_upstream_tools", "mb.test.test_upstream_smoke", "-v"]],
+    "upstream-tools": [["-m", "unittest", "mb.test.test_upstream_tools", "mb.test.test_upstream_smoke", "mb.test.test_check_upstream", "-v"]],
     "branding": [["-m", "unittest", "mb.test.test_branding", "mb.test.test_branding_assets", "mb.test.test_branding_strings", "-v"]],
     "startup": [["mb/tools/test_startup_arguments.py"]],
     "config": [["mb/tools/test_config.py"]],

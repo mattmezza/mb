@@ -1,5 +1,13 @@
 # Browser test protocol
 
+Latest standalone upstream-tool run: 21 tests passed with pinned Python on
+2026-09-08, including 12 read-only candidate-checker tests. Receipt:
+`.build/test-evidence/standalone-20260908T111509.757071Z/results.json`.
+The live official-metadata check also matched the current Chromium pin; its
+candidate record and comparison log are in
+`.build/update-checks/20260908T111527.423218Z/`. These are maintenance-tool
+results and do not establish browser runtime behavior.
+
 Status as of 2026-09-08: Phase 1 is compiling pinned upstream Chromium stable
 152.0.7977.82. There has been no successful browser build and no successful
 browser test. Every result below is pending. This document is a procedure, not

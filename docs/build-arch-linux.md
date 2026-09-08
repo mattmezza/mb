@@ -86,7 +86,8 @@ arguments, and `autoninja -j 4` maps to four local Siso jobs at this tool pin.
 Four jobs are a conservative starting point. After observing low memory pressure
 and 12 GiB available RAM, this machine's active build was safely interrupted and
 resumed with `python3 mb/tools/upstream.py build --jobs 8`, reusing completed
-outputs. The current command and logs are in STATUS.md.
+outputs. After the heavy V8 compilation finished and about 11 GiB RAM was
+available, it was resumed at ten jobs. The current command and logs are in STATUS.md.
 
 The first output is intended at `src/out/mb-debug`. Record the active stage in
 STATUS.md before compilation and watch free disk/RAM during the build. The
@@ -119,3 +120,37 @@ evidence still require inspection before the baseline gate can pass.
 Release output will use `src/out/mb-release`. Release commands, product
 integration and Arch packaging will be added and exercised in their phases;
 they are not yet implemented or validated.
+
+## Product packaging requirements under preparation
+
+Chromium's development defaults set `generate_about_credits = is_official_build`.
+Consequently the current unmodified debug build embeds a sample credits page.
+Before distributing any product build, explicitly generate the real upstream
+credits and include the product's third-party notices. Enabling real credits is
+required for the product debug build as well as the release build; it does not
+require enabling Google branding. The implementation seam is
+`components/resources/BUILD.gn`, including its downstream notice-directory hook.
+
+The completed package must use an explicit payload inventory derived from the
+effective GN settings and upstream Linux installer rules. The current debug
+target's broad `runtime_deps` list includes thousands of generated/tool/test
+inputs, so it is not an install manifest. Required browser resources, locales,
+ICU/V8 data, Crashpad, enabled ANGLE/Vulkan/SwiftShader libraries and component
+preloads must be accounted for. A component debug distribution also needs its
+actual private ELF dependency closure and dynamically loaded libraries. Keep
+those private libraries with the browser rather than installing them globally.
+
+The sandbox target is a separate packaging prerequisite: build `chrome_sandbox`
+and install it beside the browser as `chrome-sandbox`. Chromium's packaged
+setuid fallback requires root ownership and mode 4755; package installation is
+the privileged step, not the build agent. Renaming the browser executable does
+not rename this helper's lookup path. Validate its dependencies and sandboxed
+runtime after installation. Do not work around a missing helper by disabling
+the sandbox.
+
+Preserve upstream internal resource filenames when changing the executable's
+identity. Staging must fail when a feature is enabled but its required payload
+is absent, rather than silently omitting it. The eventual tested PKGBUILD,
+release arguments, artifact inventory and exact commands remain Phase 6 work.
+See [upstream maintenance](upstream-updates.md) for the update procedure and its
+current validation limits.

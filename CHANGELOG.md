@@ -26,3 +26,5 @@
 - Add a logged focused-test runner; all 107 standalone tests pass using the
   pinned Python interpreter, including fresh product C++ builds.
 - Browser integration remains gated on the successful upstream build and launch.
+- Add a read-only stable-release candidate checker and document the upstream
+  update procedure, packaging payload requirements and real-credits build gate.
