@@ -127,6 +127,11 @@ def main():
 
         window = wait_until(find_window, "test browser's visible X11 window")
         result["window"] = window
+        proc = Path(f"/proc/{browser.pid}")
+        result["running_executable"] = str(proc.joinpath("exe").resolve(strict=True))
+        result["running_argv"] = proc.joinpath("cmdline").read_bytes().decode().rstrip("\0").split("\0")
+        if result["running_executable"] != str(BINARY.resolve()) or result["running_argv"] != argv:
+            raise RuntimeError("Running browser executable or arguments differ from the requested launch")
         (evidence / "window.txt").write_text(command("xwininfo", "-id", window) + "\n")
 
         def owned():
@@ -161,6 +166,7 @@ def main():
         first = "data:text/html," + quote("<title>Baseline one</title><h1>Navigation works</h1>")
         second = "data:text/html," + quote("<title>Baseline two</title><h1>Second tab</h1>")
         navigate(first, "Baseline one")
+        capture("01-navigation")
         result["automated_checks"].append("navigation")
         key("ctrl+t")
         navigate(second, "Baseline two")

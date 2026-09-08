@@ -1,6 +1,6 @@
 # Browser test protocol
 
-Status as of 2026-09-08: Phase 1 is fetching pinned upstream Chromium stable
+Status as of 2026-09-08: Phase 1 is compiling pinned upstream Chromium stable
 152.0.7977.82. There has been no successful browser build and no successful
 browser test. Every result below is pending. This document is a procedure, not
 evidence that any command has run or passed.
@@ -11,12 +11,22 @@ Use this protocol only after the unmodified binary exists at
 `.build/chromium/src/out/mb-debug/chrome`. Run it from the repository root in an
 interactive Bash shell attached to the real Xorg session. Start that shell with
 `bash`, then enable `set -euo pipefail` as shown so a failed ownership, path, or
-existence check stops the procedure. The test must use
-`DISPLAY=:0`, Ozone's X11 backend, Chromium's normal sandbox, and a fresh,
+existence check stops the procedure. The test must use the real Xorg session
+(`DISPLAY=:0` on the inspected machine), Ozone's X11 backend, Chromium's normal sandbox, and a fresh,
 dedicated user-data directory. Do not add `--no-sandbox`,
 `--disable-setuid-sandbox`, `--remote-debugging-port`, or
 `--remote-debugging-pipe`. No browser automation connector is part of this
 baseline.
+
+`mb/tools/upstream_smoke.py --build-receipt PATH` automates the scoped launch,
+navigation/tab assertions, kernel sandbox checks, screenshots and shutdown.
+It uses the caller's `DISPLAY`; confirm this is the actual Xorg session, not a
+virtual or unintended display. Its successful result still requires a dated
+`results.md` in the evidence directory recording visual review of navigation,
+DevTools and `chrome://sandbox`. Inspect additional owned DevTools windows if
+undocked. A screenshot filename or the automated exit code alone does not pass
+those checks. Record the browser-reported sandbox conclusion together with
+the collected renderer kernel state before allowing product integration.
 
 The operator must create an evidence directory for this run and record the exact
 binary before launch. Replace the example timestamp with the actual UTC start
@@ -291,6 +301,7 @@ Observed on this Arch machine on 2026-09-08:
 | --- | --- |
 | `python3 -m unittest mb.test.test_upstream_tools mb.test.test_branding -v` | 23 passed; includes generated/version-header compilation, actual pinned GN evaluation, and safe output migration |
 | `python3 -m unittest mb.test.test_branding_assets -v` | 4 actual-renderer tests passed; native dimensions, deterministic bytes, and safe output handling |
+| `python3 mb/test/test_branding_strings.py` | 7 passed; pinned GRIT preserves 680 resource IDs and 142 German translations; checks attribution and English fallback |
 | `python3 mb/tools/test_startup_arguments.py` | 8 GoogleTests passed |
 | `python3 mb/tools/test_config.py` | 15 GoogleTests passed, including excessive nesting and malformed UTF-8 |
 | `python3 mb/tools/test_environment_paths.py` | 22 GoogleTests passed, including concurrent creation, permissions, symlinks and path lengths |

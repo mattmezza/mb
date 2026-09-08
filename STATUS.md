@@ -49,8 +49,18 @@ Updated: 2026-09-08.
   but has not launched a browser. Local MV3 extension fixture prepared and
   syntax-checked with Node; runtime behavior is pending.
 - GitHub: `https://github.com/mattmezza/mb.git`; standalone product libraries,
-  control command, and capability fixtures pushed through `d784528` on main.
+  control command, capability fixtures and native branding assets pushed
+  through `7eb590b` on main.
   Source and build artifacts remain ignored.
+- Native icon generation: four actual librsvg rendering tests passed, with
+  deterministic PNGs, expected Chromium dimensions and managed output checks.
+  The original placeholder icon was visually inspected. Chromium's license
+  parser also accepted the vendored TOML parser metadata and MIT license file
+  without errors. Native browser integration remains pending.
+- Native string derivation: seven tests passed using pinned GRIT, preserving
+  680 resource IDs and 142 unchanged German translations. All 166 inputs are
+  checked against their pinned Git blobs. Changed messages use upstream's
+  English fallback; copyrights, license links and placeholders are retained.
 
 ## Exact continuation
 
