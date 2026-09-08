@@ -1,0 +1,27 @@
+# Paths in this example are relative to this configuration file's directory.
+# Replace them with your chosen absolute paths or ~/ paths before daily use.
+schema_version = 1
+
+[app]
+default_environment = "personal"
+restore_last_environment = true
+
+[ui]
+tabs_position = "left"
+sidebar_width = 280
+sidebar_collapsed = false
+show_tab_close_buttons = true
+theme = "system"
+
+[environments.personal]
+data_directory = "environments/personal"
+accent_color = "#7c6ff0"
+startup_urls = []
+
+[environments.work]
+data_directory = "environments/work"
+accent_color = "#3978d4"
+startup_urls = [
+  "https://mail.example.com",
+  "https://calendar.example.com",
+]
