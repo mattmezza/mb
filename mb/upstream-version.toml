@@ -1,0 +1,19 @@
+schema_version = 1
+
+[chromium]
+version = "152.0.7977.82"
+commit = "d04cdb24d67b081f6cf80200ffc5233f44b61109"
+tag = "refs/tags/152.0.7977.82"
+branch = "refs/branch-heads/7977"
+selected_date = "2026-09-08"
+channel = "Stable"
+platform = "Linux"
+repository = "https://chromium.googlesource.com/chromium/src.git"
+release_source = "https://chromiumdash.appspot.com/fetch_releases?channel=Stable&platform=Linux&num=1"
+announcement = "https://chromereleases.googleblog.com/2026/09/stable-channel-update-for-desktop_01882797386.html"
+verification_source = "https://chromium.googlesource.com/chromium/src/+/refs/tags/152.0.7977.82?format=JSON"
+
+[depot_tools]
+commit = "5ac00be14bc55f60335d0b284bc7e0fd6b4c0e69"
+selected_date = "2026-09-08"
+repository = "https://chromium.googlesource.com/chromium/tools/depot_tools.git"
