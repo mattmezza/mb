@@ -77,7 +77,11 @@ def wm_class_values(properties):
 def main(*, product_build=False):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--build-receipt", type=Path, required=True)
+    parser.add_argument("--local-ntp", action="store_true",
+                        help="Verify Ctrl+T after local product NTP integration")
     args = parser.parse_args()
+    if args.local_ntp and not product_build:
+        parser.error("--local-ntp requires the product smoke entry point")
     browser = None
     evidence = None
     capture = None
@@ -241,6 +245,16 @@ def main(*, product_build=False):
         # Alt+Enter opens the supplied URL directly in a new tab. Stock regular
         # NTP can fetch remote executable UI; test Ctrl+T after the local product
         # NTP is integrated instead of transiently opening the stock NTP here.
+        if args.local_ntp:
+            key("ctrl+t")
+            def local_ntp_title():
+                current = title()
+                return "Baseline one" not in current and product_values["full_name"] in current
+            wait_until(local_ntp_title, "local new-tab title")
+            capture("02-local-ntp-review-required")
+            key("ctrl+w")
+            wait_until(lambda: "Baseline one" in title(), "close local new tab")
+            result["automated_checks"].append("Ctrl+T opens local product NTP; title and screenshot captured")
         navigate(second, "Baseline two", new_tab=True)
         key("ctrl+shift+Tab")
         wait_until(lambda: "Baseline one" in title(), "previous tab")

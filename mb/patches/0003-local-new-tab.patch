@@ -1,0 +1,108 @@
+diff --git a/chrome/browser/ui/webui/BUILD.gn b/chrome/browser/ui/webui/BUILD.gn
+--- a/chrome/browser/ui/webui/BUILD.gn
++++ b/chrome/browser/ui/webui/BUILD.gn
+@@ -109,6 +109,21 @@
+     "//ui/webui:buildflags",
+   ]
+ 
++  if (is_linux) {
++    sources += [
++      "//mb/ui/new_tab/new_tab_ui.cc",
++      "//mb/ui/new_tab/new_tab_ui.h",
++    ]
++    deps += [
++      "//base",
++      "//chrome/browser/profiles:profile",
++      "//chrome/browser/ui/webui/page_not_available_for_guest",
++      "//chrome/common",
++      "//mb:branding",
++      "//services/network/public/mojom",
++    ]
++  }
++
+   if (is_win || is_chromeos) {
+     deps += [ "//chrome/browser/ui/webui/signin:inline_login" ]
+   }
+diff --git a/chrome/browser/ui/webui/chrome_web_ui_configs.cc b/chrome/browser/ui/webui/chrome_web_ui_configs.cc
+--- a/chrome/browser/ui/webui/chrome_web_ui_configs.cc
++++ b/chrome/browser/ui/webui/chrome_web_ui_configs.cc
+@@ -68,6 +68,11 @@
+ #include "printing/buildflags/buildflags.h"
+ #include "ui/webui/buildflags.h"
+ 
++#if BUILDFLAG(IS_LINUX)
++#include "chrome/common/webui_url_constants.h"
++#include "mb/ui/new_tab/new_tab_ui.h"
++#endif
++
+ #if BUILDFLAG(ENABLE_WEBUI_NTP)
+ #include "chrome/browser/ui/webui/new_tab_page/new_tab_page_ui.h"
+ #endif  // BUILDFLAG(ENABLE_WEBUI_NTP)
+@@ -316,7 +321,12 @@
+   map.AddWebUIConfig(std::make_unique<WebRtcLogsUIConfig>());
+   map.AddWebUIConfig(std::make_unique<RegionalCapabilitiesInternalsUIConfig>());
+ #if BUILDFLAG(ENABLE_WEBUI_NTP)
++#if BUILDFLAG(IS_LINUX)
++  map.AddWebUIConfig(std::make_unique<mb::NewTabUIConfig>(
++      chrome::kChromeUINewTabPageHost));
++#else
+   map.AddWebUIConfig(std::make_unique<NewTabPageUIConfig>());
++#endif
+ #endif  // BUILDFLAG(ENABLE_WEBUI_NTP)
+ 
+ #if BUILDFLAG(ENABLE_WEBUI_CERTIFICATE_VIEWER)
+@@ -370,7 +380,12 @@
+           multistep_filter_internals::MultistepFilterInternalsUIConfig>());
+ #if BUILDFLAG(ENABLE_WEBUI_NTP)
+   map.AddWebUIConfig(std::make_unique<NewTabFooterUIConfig>());
++#if BUILDFLAG(IS_LINUX)
++  map.AddWebUIConfig(std::make_unique<mb::NewTabUIConfig>(
++      chrome::kChromeUINewTabPageThirdPartyHost));
++#else
+   map.AddWebUIConfig(std::make_unique<NewTabPageThirdPartyUIConfig>());
++#endif
+ #endif  // BUILDFLAG(ENABLE_WEBUI_NTP)
+   map.AddWebUIConfig(std::make_unique<NewTabUIConfig>());
+   map.AddWebUIConfig(std::make_unique<OmniboxEverywhereUIConfig>());
+diff --git a/chrome/browser/search/search.cc b/chrome/browser/search/search.cc
+--- a/chrome/browser/search/search.cc
++++ b/chrome/browser/search/search.cc
+@@ -176,10 +176,13 @@
+     const GURL local_url;
+ #else
+     const bool default_is_google = DefaultSearchProviderIsGoogle(profile);
+-    const GURL local_url(default_is_google
++    // mb's built-in NTP is bundled locally, independently of the search
++    // provider. Extension overrides have already run before this rewrite.
++    const bool use_local_ntp = BUILDFLAG(IS_LINUX) || default_is_google;
++    const GURL local_url(use_local_ntp
+                              ? chrome::ChromeUINewTabPageURLAsGURL()
+                              : GURL(chrome::kChromeUINewTabPageThirdPartyURL));
+-    if (default_is_google) {
++    if (use_local_ntp) {
+       return NewTabURLDetails(local_url, NEW_TAB_URL_VALID);
+     }
+ #endif
+diff --git a/chrome/browser/chrome_content_browser_client.cc b/chrome/browser/chrome_content_browser_client.cc
+--- a/chrome/browser/chrome_content_browser_client.cc
++++ b/chrome/browser/chrome_content_browser_client.cc
+@@ -868,6 +868,11 @@
+ bool HandleNewTabPageLocationOverride(
+     GURL* url,
+     content::BrowserContext* browser_context) {
++#if BUILDFLAG(IS_LINUX)
++  // This policy precedes extensions and built-in NTP rewriting. mb does not
++  // allow it to replace the bundled browser UI with a remote document.
++  return false;
++#else
+   if (!url->SchemeIs(content::kChromeUIScheme) ||
+       url->host() != chrome::kChromeUINewTabHost) {
+     return false;
+@@ -893,6 +898,7 @@
+ 
+   *url = GURL(ntp_location);
+   return true;
++#endif
+ }
+ 
+ #if !BUILDFLAG(IS_ANDROID)

@@ -296,21 +296,21 @@ evidence and any failures; the presence of files alone is not a pass.
 
 ## Pending evidence matrix
 
-Browser rows remain pending while the first upstream build and launch are
-incomplete. “Automated” means a repeatable product-owned test or command with an
+The upstream and branded debug build/launch gates passed. Deeper capability
+checks remain pending as shown below. “Automated” means a repeatable product-owned test or command with an
 asserted result. “Manual/observed” means dated direct inspection by an operator
 or agent, supported by screenshots or logs.
 
 | Area | Automated evidence | Manual/observed evidence | Current state |
 | --- | --- | --- | --- |
-| Upstream startup, navigation, tabs, shutdown | PID-scoped launch/process checks; future smoke assertions | X11 window, page, tab switching, clean-close observation | Pending Phase 1 |
-| Sandbox | `/proc` renderer status and command-line capture | `chrome://sandbox` inspection | Pending Phase 1 |
+| Upstream startup, navigation, tabs, shutdown | PID-scoped launch/process checks; future smoke assertions | X11 window, page, tab switching, clean-close observation | Passed scoped Phase 1 and Phase 2 gates |
+| Sandbox | `/proc` renderer status and command-line capture | `chrome://sandbox` inspection | Passed scoped Phase 1 and Phase 2 gates |
 | Product configuration | Parser/schema and compiled control-command tests pass | Browser restart/reload and error presentation | Standalone code tested; browser integration pending |
 | Named environments | Path/collision/secure-creation tests pass; browser locking and storage tests pending | Two concurrent environment workflows | Standalone path core tested; browser integration pending |
-| Product tab sidebar | Model/browser tests, keyboard operations, 100-tab measurements | Mouse, focus, resize, drag, state and accessibility checks | Pending Phase 3; product code absent |
+| Product tab sidebar | Model/browser tests, keyboard operations, 100-tab measurements | Mouse, focus, resize, drag, state and accessibility checks | Native tab baseline passed; custom sidebar integration pending |
 | Incognito | Off-the-record and persistence assertions | Normal/incognito distinction and workflow | Pending Phases 4–5 |
 | Extensions | MV3 load, service worker, content script, storage and isolation tests | Action UI, permissions, enable/disable/removal and extension DevTools | Pending Phase 5 |
-| DevTools | Future browser tests for opening and inspected targets | Shortcuts, context Inspect, panels and docking in normal/incognito windows | Pending baseline smoke and Phase 5 depth |
+| DevTools | Future browser tests for opening and inspected targets | Shortcuts, context Inspect, panels and docking in normal/incognito windows | Ctrl+Shift+I docked Elements observed; Phase 5 depth pending |
 | Linux/X11 integration | Targeted checks where Chromium exposes test hooks | Clipboard, IME, HiDPI, multiple monitors/windows, file picker, notifications, URL activation and desktop integration | Pending Phase 5 |
 
 ## Standalone product checks

@@ -1,6 +1,6 @@
 # Discovery: 2026-09-08
 
-This is an inspection record for the initial Arch Linux development machine. No Chromium build, launch, or product acceptance test has passed yet.
+This is an inspection record for the initial Arch Linux development machine. At this initial inspection, before Phase 1, no Chromium build or launch had passed. For current progress, see [STATUS.md](../STATUS.md).
 
 ## Workspace and machine
 

@@ -78,3 +78,13 @@ or bounds check. The parser's 1 MiB input cap and value/key depth limits remain
 active and covered by tests. It does not establish that every vendor buffer
 access is audited; continued vendor updates and malformed-input testing remain
 part of maintenance. No target-wide buffer-warning suppression is added.
+
+## Bundled new-tab page
+
+The Linux product NTP uses compiled local HTML/CSS and no remote browser-UI
+scripts. Its CSP denies script, connection, frame and worker sources. The
+`NewTabPageLocation` policy override is deliberately unsupported because it can
+replace this UI with a remote document before normal URL rewriting. Search
+engine selection, native OTR routing and legitimate extension NTP overrides
+retain their upstream paths. See [local NTP integration](local-new-tab.md) for
+scope and pending validation. No browsing-origin or certificate policy is relaxed.

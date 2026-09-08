@@ -8,7 +8,9 @@ The [reviewed product launch](product-baseline-2026-09-08.md) verifies its limit
 scope. This repository does not yet provide the requested daily-driver browser.
 Custom UI, runtime isolation, extension compatibility, release build and Arch
 packaging remain pending. See the [baseline review](upstream-baseline-2026-09-08.md)
-for the upstream data-URL debug assertion and unverified F12/Ctrl+T checks.
+for the upstream data-URL debug assertion and unverified F12 check. Ctrl+T now
+passes the [local NTP gate](local-new-tab.md); the inherited omnibox AI Mode
+affordance and irrelevant Customize Chrome controls remain UI cleanup.
 
 The compiled configuration companion works independently. Its parser and
 environment-directory core have focused tests, but browser startup does not
@@ -26,12 +28,13 @@ The pinned unbranded upstream arguments retain Chromium's codec defaults:
 `proprietary_codecs=false` and `ffmpeg_branding="Chromium"`. Proprietary codec
 and DRM playback support is not promised. No unofficial Google API keys are
 included. Google-dependent services and Chrome Web Store installation remain
-unverified; unpacked extension support also awaits runtime testing.
+unverified; the focused unpacked MV3 NTP override/disable test passes, while the broader
+extension capability suite remains pending.
 
 Only Arch Linux, x86-64, under Xorg is the initial target. Wayland, Windows,
 macOS, automatic updates, accounts, and cloud synchronization are outside the
 first release scope. Release updates will use package replacement.
 
-All twenty daily-driver acceptance criteria remain open. Standalone test
+Daily-driver acceptance remains incomplete. Standalone test
 success is recorded separately from browser capability evidence in
 [testing](testing.md).

@@ -33,3 +33,6 @@
 
 - Pass the branded debug browser Xorg smoke with manifest window identity, original
   version artwork, native sandbox evidence and clean shutdown; retain prior failures.
+- Add a focused native browser-test executable and verify authoritative tab operations.
+- Bundle the local manifest-branded new-tab page, preserve native incognito and
+  extension override routing, and pass seven browser tests plus reviewed Ctrl+T/Xorg smoke.

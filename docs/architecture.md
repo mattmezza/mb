@@ -2,7 +2,8 @@
 
 Status: the unmodified upstream build and sandboxed Xorg baseline passed.
 The product core and companion compile and pass tests inside Chromium GN.
-Native branding integration is applied and the renamed browser is compiling.
+Native branding integration and the renamed debug browser's scoped Xorg launch
+passed; see [the product review](product-baseline-2026-09-08.md).
 The custom browser UI and startup service wiring remain pending.
 
 ## Product boundary

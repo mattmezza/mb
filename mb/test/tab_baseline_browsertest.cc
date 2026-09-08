@@ -3,8 +3,8 @@
 #include <string>
 
 #include "chrome/browser/ui/browser.h"
-#include "chrome/browser/ui/tabs/tab_strip_model_delegate.h"
 #include "chrome/browser/ui/tabs/tab_strip_model.h"
+#include "chrome/browser/ui/tabs/tab_strip_model_delegate.h"
 #include "chrome/test/base/in_process_browser_test.h"
 #include "chrome/test/base/ui_test_utils.h"
 #include "content/public/browser/web_contents.h"
@@ -29,7 +29,8 @@ void ExpectURL(content::WebContents* contents, const GURL& expected) {
 
 class MbTabBaselineBrowserTest : public InProcessBrowserTest {};
 
-IN_PROC_BROWSER_TEST_F(MbTabBaselineBrowserTest, CreateActivateReorderAndClose) {
+IN_PROC_BROWSER_TEST_F(MbTabBaselineBrowserTest,
+                       CreateActivateReorderAndClose) {
   TabStripModel* const tabs = browser()->tab_strip_model();
   const GURL first_url = LocalPage("first", "first page");
   const GURL second_url = LocalPage("second", "second page");

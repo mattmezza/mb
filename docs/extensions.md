@@ -1,8 +1,13 @@
 # Extension and Google-service limits
 
 This project is an unbranded upstream Chromium build. It must not ship, copy,
-or suggest unofficial Google API keys. The binary has not launched yet, so items
-marked **pending** require a browser-level check.
+or suggest unofficial Google API keys. The branded debug browser has launched
+under Xorg. A focused browser test loads a local unpacked MV3 NTP extension,
+checks that its page overrides chrome://newtab, disables it through the native
+registrar and verifies restoration of the bundled page. Evidence:
+`.build/test-evidence/product-browser-tests-20260908T201439.291090Z/results.json`.
+This does not establish service-worker, toolbar-action, storage, incognito or
+cross-environment compatibility; those checks remain **pending**.
 
 ## What the source establishes
 

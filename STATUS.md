@@ -56,15 +56,35 @@ The corrected runner uses a short 0700 TMPDIR and checks socket path capacity;
 five runner regression tests pass. This harness result supplements the actual
 production launch gate; it does not establish the remaining UI capabilities.
 
-Next integrate the reviewed local NTP and six browser tests, then:
+The local NTP controller and six browser tests now pass alongside the tab baseline:
+seven tests passed in 76 seconds on actual X11. Evidence:
+`.build/test-evidence/product-browser-tests-20260908T201439.291090Z/results.json`.
+Test build receipt: `.build/logs/product-test-build-20260908T201307.396973Z.json`.
+GN header checks and three smoke-helper tests pass. Integration/runner tool suite
+also passed (18 tests), receipt `standalone-20260908T200445.214481Z/results.json`.
+
+The first NTP integration builds corrected generated-string conversion, renamed
+Browser accessors and a Linux compile-time policy guard. Failed browser suites
+are preserved at `product-browser-tests-20260908T200425.347912Z` and
+`product-browser-tests-20260908T201001.372254Z`: tests incorrectly used the visible
+NTP URL alias, checked type metadata absent from the native legacy controller,
+and expected a CSS link which GRIT inlines. The final suite passes without
+weakening browser checks or changing native incognito/extension security.
+
+Production build and reviewed Ctrl+T/Xorg gate passed:
+`.build/logs/product-build-20260908T201640.499308Z.json`,
+`.build/test-evidence/product-20260908T201725.564345Z/review.json`.
+The local page, tabs, DevTools and sandbox were visibly reviewed; normal exit 0.
+Horizontal tabs remain pending replacement. Native omnibox AI Mode affordance
+and irrelevant Customize Chrome controls remain UI cleanup. Reproduction:
 
 ```sh
-python3 mb/tools/product.py prepare
-python3 mb/tools/product.py gen
-python3 mb/tools/product.py test-build --targets mb:mb_browser_tests --jobs 12
-python3 mb/tools/browser_tests.py --build-receipt .build/logs/<successful-test-build>.json
 python3 mb/tools/product.py build --jobs 12
+python3 mb/tools/product_smoke.py --build-receipt .build/logs/<successful-product-build>.json --local-ntp
 ```
+
+Next stage the product sidebar/window adapter and
+mandatory vertical policy, then compile and run focused browser tests again.
 
 ## Completed gates and maintenance notes
 
@@ -84,7 +104,7 @@ retiring owned generated files archives them. Manifest-only regeneration is test
 Known upstream issue: typing percent-encoded data HTML triggered a debug omnibox
 DCHECK; base64 fixtures pass. Initial product smoke had a post-DevTools navigation
 timeout; two diagnostic retries passed, without a proven timing root cause.
-F12 and Ctrl+T remain unverified. The latter awaits the local-only NTP.
+F12 remains unverified. Ctrl+T now passes the local-only NTP gate.
 
 Scoped toml++ unsafe-buffer diagnostics are suppressed only around its vendor
 include; parser limits and runtime hardening remain. No sandbox, certificate,

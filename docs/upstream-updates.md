@@ -2,7 +2,7 @@
 
 Status: the initial pinned Chromium build and sandboxed Xorg baseline passed.
 Product overlay application, GN generation and focused product tests work; the
-renamed browser is compiling. A complete upstream-update and package rehearsal
+renamed debug browser build and scoped Xorg launch passed. A complete upstream-update and package rehearsal
 remains pending. This document
 defines the maintenance procedure; it does not establish release acceptance.
 

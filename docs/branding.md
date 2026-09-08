@@ -34,14 +34,15 @@ backslashes, dollar signs, and `@` rather than attempting unsafe escaping. Every
 manifest validation diagnostic names both the manifest path and the rejected key.
 
 `branding_strings.grdp` remains auxiliary future-GRIT input. It is not a
-replacement for the actual `IDS_PRODUCT_NAME` resource wiring, which remains
-pending a separate generated-GRD integration.
+replacement for the actual `IDS_PRODUCT_NAME` resource wiring, which now uses
+generated GRDs and the build-resolved resource-ID map.
 
 `product.py prepare` now stages these generated inputs under `//mb/generated`
 and applies the reviewed native integration patch. The first preparation requires
 a passed, visually reviewed upstream baseline. See [product integration](product-integration.md)
-for exact commands and the patch boundary. GN generation has passed; compiled
-product identity and the renamed browser launch remain pending.
+for exact commands and the patch boundary. Compiled product identity and the
+renamed browser's scoped Xorg launch passed; see the
+[dated product review](product-baseline-2026-09-08.md).
 
 The executable string macro is defined in the generated header rather than an
 exported compiler definition, so unrelated browser translation units retain their
