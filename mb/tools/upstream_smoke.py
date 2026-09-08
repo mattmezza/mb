@@ -58,6 +58,13 @@ def descendants(pid):
     return found
 
 
+def process_title(data):
+    # Linux Chromium rewrites argv with SetProcessTitleFromCommandLine:
+    # /proc/cmdline then contains one space-joined title followed by NULs.
+    # Accept the original exec representation too, during early startup.
+    return " ".join(data.decode().rstrip("\0").split("\0"))
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--build-receipt", type=Path, required=True)
@@ -129,8 +136,8 @@ def main():
         result["window"] = window
         proc = Path(f"/proc/{browser.pid}")
         result["running_executable"] = str(proc.joinpath("exe").resolve(strict=True))
-        result["running_argv"] = proc.joinpath("cmdline").read_bytes().decode().rstrip("\0").split("\0")
-        if result["running_executable"] != str(BINARY.resolve()) or result["running_argv"] != argv:
+        result["running_process_title"] = process_title(proc.joinpath("cmdline").read_bytes())
+        if result["running_executable"] != str(BINARY.resolve()) or result["running_process_title"] != " ".join(argv):
             raise RuntimeError("Running browser executable or arguments differ from the requested launch")
         (evidence / "window.txt").write_text(command("xwininfo", "-id", window) + "\n")
 
@@ -191,13 +198,22 @@ def main():
         for pid in descendants(browser.pid):
             try:
                 proc = Path(f"/proc/{pid}")
-                if proc.joinpath("exe").resolve() != BINARY.resolve():
-                    continue
-                cmd = proc.joinpath("cmdline").read_bytes().decode().split("\0")
+                try:
+                    executable = str(proc.joinpath("exe").resolve(strict=True))
+                    if executable != str(BINARY.resolve()):
+                        continue
+                except PermissionError:
+                    # Chromium's zygote sets PR_SET_DUMPABLE=0. The kernel may
+                    # consequently deny /proc/exe even to the launching user.
+                    # Ownership here comes from the spawned browser's process
+                    # tree; do not relax the sandbox to read this symlink.
+                    executable = "unavailable: kernel denied access"
+                cmd = process_title(proc.joinpath("cmdline").read_bytes())
                 status = dict(line.split(":", 1) for line in proc.joinpath("status").read_text().splitlines())
-                processes.append({"pid": pid, "renderer": "--type=renderer" in cmd,
+                processes.append({"pid": pid, "renderer": bool(re.search(r"(?:^| )--type=renderer(?: |$)", cmd)),
+                                  "executable": executable,
                                   "status": {k: status.get(k, "").strip() for k in
-                                             ("PPid", "NSpid", "NoNewPrivs", "Seccomp", "Seccomp_filters")}})
+                                             ("PPid", "Uid", "NSpid", "NoNewPrivs", "Seccomp", "Seccomp_filters")}})
             except (FileNotFoundError, ProcessLookupError):
                 continue
         result["processes"] = processes
