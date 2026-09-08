@@ -79,5 +79,21 @@ TEST(StartupArgumentsTest, RejectsMalformedArgv) {
   EXPECT_FALSE(NormalizeStartupArguments({"browser", std::string("a\0b", 3)}).value);
 }
 
+TEST(StartupArgumentsTest, MatchesChromiumPosixAliasesAndWhitespace) {
+  auto parsed = NormalizeStartupArguments(
+      {"browser", " -config=/tmp/config.toml ", "-environment", "work",
+       "\t-user-data-dir=/tmp/root\t", " -- ", "--environment=literal"});
+  ASSERT_TRUE(parsed.value) << parsed.error;
+  EXPECT_EQ(parsed.value->config_path, "/tmp/config.toml");
+  EXPECT_EQ(parsed.value->environment, "work");
+  EXPECT_TRUE(parsed.value->has_user_data_dir);
+  EXPECT_EQ(parsed.value->argv[1], "--config=/tmp/config.toml");
+  EXPECT_EQ(parsed.value->argv.back(), "--environment=literal");
+  EXPECT_FALSE(NormalizeStartupArguments(
+      {"browser", "--environment=work", " -environment=personal "}).value);
+  EXPECT_FALSE(NormalizeStartupArguments(
+      {"browser", "--config", " --incognito "}).value);
+}
+
 }  // namespace
 }  // namespace mb

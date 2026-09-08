@@ -2,6 +2,7 @@
 """Compile and run the standalone startup argument tests using pinned tools."""
 
 from pathlib import Path
+import os
 import subprocess
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -15,6 +16,8 @@ def main():
     if not compiler.is_file() or not (gtest / "src/gtest-all.cc").is_file():
         raise SystemExit("Fetch the pinned Chromium checkout and run hooks first")
     OUTPUT.mkdir(parents=True, exist_ok=True)
+    temporary = OUTPUT / "tmp"
+    temporary.mkdir(mode=0o700, exist_ok=True)
     binary = OUTPUT / "startup_arguments_test"
     command = [str(compiler), "-std=c++20", "-fno-exceptions", "-fno-rtti",
                "-Wall", "-Wextra", "-Werror", "-pthread", "-I", str(ROOT),
@@ -23,7 +26,7 @@ def main():
                str(ROOT / "mb/test/startup_arguments_test.cc"),
                str(gtest / "src/gtest-all.cc"), str(gtest / "src/gtest_main.cc"),
                "-o", str(binary)]
-    subprocess.run(command, check=True)
+    subprocess.run(command, check=True, env=dict(os.environ, TMPDIR=str(temporary)))
     subprocess.run([str(binary), f"--gtest_output=xml:{OUTPUT / 'results.xml'}"], check=True)
 
 
