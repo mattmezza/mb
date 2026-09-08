@@ -18,8 +18,10 @@ DEFAULT_OUTPUT = ROOT / ".build" / "generated" / "branding"
 CHROMIUM_SOURCE = ROOT / ".build" / "chromium" / "src"
 SCHEMA_VERSION = 1
 PRODUCT_KEYS = frozenset({"short_name", "full_name", "executable_name", "profile_directory_name", "url_scheme", "description", "application_id", "desktop_file_name"})
-STATIC_OUTPUT_NAMES = frozenset(("branding.h", "branding.gni", "branding_strings.grdp", "packaging.json", "icon.svg"))
+STATIC_OUTPUT_NAMES = frozenset(("BRANDING", "branding.h", "branding.gni", "branding_strings.grdp", "packaging.json", "icon.svg"))
+V1_STATIC_OUTPUT_NAMES = STATIC_OUTPUT_NAMES - {"BRANDING"}
 MANAGED_FILE = ".branding-managed.json"
+MANAGED_SCHEMA_VERSION = 2
 SAFE_IDENTIFIER = re.compile(r"[a-z][a-z0-9-]*\Z")
 SAFE_APPLICATION_ID = re.compile(r"[a-z][a-z0-9]*(?:\.[a-z][a-z0-9]*)+\Z")
 
@@ -74,6 +76,12 @@ def load_manifest(path):
     if missing:
         fail(path, "product", "missing key(s): " + ", ".join(sorted(missing)))
     values = {key: require_text(path, product, key) for key in sorted(PRODUCT_KEYS)}
+    if any(character in values["full_name"] for character in '"\\$@'):
+        fail(
+            path,
+            "product.full_name",
+            "must not contain double quote, backslash, dollar, or @ because legacy BRANDING is substituted raw into GN and C++ macros",
+        )
     for key in ("short_name", "executable_name", "profile_directory_name", "url_scheme"):
         if not SAFE_IDENTIFIER.fullmatch(values[key]):
             fail(path, f"product.{key}", "must be a lowercase path-safe identifier")
@@ -114,9 +122,22 @@ def render(manifest):
         messages.append(f'  <message name="IDS_PRODUCT_{key.upper()}" desc="Product branding value for {key}.">{escaped[key]}</message>')
     messages += ["</grit-part>", ""]
     desktop = "\n".join(["[Desktop Entry]", "Type=Application", f"Name={desktop_string(product['full_name'])}", f"Comment={desktop_string(product['description'])}", f"Exec=\"{product['executable_name']}\" %U", f"Icon={product['short_name']}", "Terminal=false", "Categories=Network;WebBrowser;", f"MimeType=text/html;application/xhtml+xml;x-scheme-handler/http;x-scheme-handler/https;x-scheme-handler/{product['url_scheme']};", f"StartupWMClass={product['application_id']}", ""])
+    branding = "\n".join([
+        f"COMPANY_FULLNAME={product['full_name']}",
+        f"COMPANY_SHORTNAME={product['short_name']}",
+        f"PRODUCT_FULLNAME={product['full_name']}",
+        f"PRODUCT_SHORTNAME={product['short_name']}",
+        f"PRODUCT_INSTALLER_FULLNAME={product['full_name']} Installer",
+        f"PRODUCT_INSTALLER_SHORTNAME={product['short_name']} Installer",
+        "COPYRIGHT=Copyright @LASTCHANGE_YEAR@ The Chromium Authors. All rights reserved.",
+        f"MAC_BUNDLE_ID={product['application_id']}",
+        "MAC_CREATOR_CODE=",
+        "MAC_TEAM_ID=",
+        "",
+    ])
     packaging = json.dumps({"schema_version": manifest["schema_version"], **product}, ensure_ascii=False, indent=2, sort_keys=True) + "\n"
     icon = "\n".join(["<?xml version=\"1.0\" encoding=\"UTF-8\"?>", "<!-- Original temporary abstract icon; generated from the branding manifest. -->", "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 128 128\" role=\"img\">", f"  <title>{escaped['full_name']}</title>", f"  <desc>{escaped['description']}</desc>", "  <rect x=\"10\" y=\"10\" width=\"108\" height=\"108\" rx=\"28\" fill=\"#1d2942\"/>", "  <path d=\"M31 38h66v52H31z\" fill=\"#d9e5ff\"/>", "  <path d=\"M31 38h66v13H31z\" fill=\"#5f7db5\"/>", "  <circle cx=\"42\" cy=\"44.5\" r=\"3\" fill=\"#f1c76a\"/>", "  <path d=\"M45 99 83 61l12 12-38 38z\" fill=\"#f1c76a\"/>", "</svg>", ""])
-    return {"branding.h": "\n".join(header), "branding.gni": "\n".join(gni), "branding_strings.grdp": "\n".join(messages), product["desktop_file_name"]: desktop, "packaging.json": packaging, "icon.svg": icon}
+    return {"BRANDING": branding, "branding.h": "\n".join(header), "branding.gni": "\n".join(gni), "branding_strings.grdp": "\n".join(messages), product["desktop_file_name"]: desktop, "packaging.json": packaging, "icon.svg": icon}
 
 
 def assert_safe_output_directory(output_dir):
@@ -140,16 +161,17 @@ def check_managed_directory(output_dir, output_names):
         managed = json.loads(marker.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as error:
         raise BrandingError(f"out-dir: invalid managed-output marker: {error}") from error
-    if set(managed) != {"schema_version", "outputs"} or managed["schema_version"] != 1:
+    if set(managed) != {"schema_version", "outputs"} or managed["schema_version"] not in (1, MANAGED_SCHEMA_VERSION):
         raise BrandingError("out-dir: managed-output marker does not match this generator")
     old_names = managed["outputs"]
     if type(old_names) is not list or any(type(name) is not str for name in old_names):
         raise BrandingError("out-dir: managed-output marker does not match this generator")
     old_set = set(old_names)
-    desktop_names = old_set - STATIC_OUTPUT_NAMES
+    static_outputs = V1_STATIC_OUTPUT_NAMES if managed["schema_version"] == 1 else STATIC_OUTPUT_NAMES
+    desktop_names = old_set - static_outputs
     if (
         len(old_names) != len(old_set)
-        or not STATIC_OUTPUT_NAMES <= old_set
+        or not static_outputs <= old_set
         or len(desktop_names) != 1
         or any(Path(name).name != name for name in old_set)
         or not next(iter(desktop_names)).endswith(".desktop")
@@ -195,7 +217,7 @@ def generate(manifest_path, output_dir):
         stale = output_dir / name
         if stale.exists():
             stale.unlink()
-    atomic_write(output_dir / MANAGED_FILE, json.dumps({"schema_version": 1, "outputs": sorted(outputs)}, indent=2, sort_keys=True) + "\n")
+    atomic_write(output_dir / MANAGED_FILE, json.dumps({"schema_version": MANAGED_SCHEMA_VERSION, "outputs": sorted(outputs)}, indent=2, sort_keys=True) + "\n")
     return output_dir
 
 

@@ -6,8 +6,8 @@ Updated: 2026-09-08.
 - Last successful browser build: none.
 - Last successful browser test: none.
 - Last successful tests: `python3 -m unittest mb.test.test_upstream_tools
-  mb.test.test_branding -v`; all 19 tests passed on 2026-09-08 (1.617 seconds),
-  including generated C++20 header compilation and pinned GN evaluation.
+  mb.test.test_branding -v`; all 23 tests passed on 2026-09-08, including
+  generated C++20/version-header compilation and actual pinned GN evaluation.
 - Last successful tooling checks: branding generation and
   `desktop-file-validate .build/generated/branding/mb.desktop` passed.
 - Standalone startup argument tests: all eight GoogleTests passed via
@@ -48,8 +48,8 @@ Updated: 2026-09-08.
   Nothing has been integrated into Chromium. The X11 smoke driver is prepared
   but has not launched a browser. Local MV3 extension fixture prepared and
   syntax-checked with Node; runtime behavior is pending.
-- GitHub: `https://github.com/mattmezza/mb.git`; setup, branding, startup argument
-  normalization, and baseline smoke tooling pushed through `6ab2937` on main.
+- GitHub: `https://github.com/mattmezza/mb.git`; standalone product libraries,
+  control command, and capability fixtures pushed through `d784528` on main.
   Source and build artifacts remain ignored.
 
 ## Exact continuation

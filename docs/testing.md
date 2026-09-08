@@ -289,7 +289,7 @@ Observed on this Arch machine on 2026-09-08:
 
 | Command | Result |
 | --- | --- |
-| `python3 -m unittest mb.test.test_upstream_tools mb.test.test_branding -v` | 19 passed; includes generated-header compilation and actual pinned GN evaluation |
+| `python3 -m unittest mb.test.test_upstream_tools mb.test.test_branding -v` | 23 passed; includes generated/version-header compilation, actual pinned GN evaluation, and safe output migration |
 | `python3 mb/tools/test_startup_arguments.py` | 8 GoogleTests passed |
 | `python3 mb/tools/test_config.py` | 15 GoogleTests passed, including excessive nesting and malformed UTF-8 |
 | `python3 mb/tools/test_environment_paths.py` | 22 GoogleTests passed, including concurrent creation, permissions, symlinks and path lengths |
