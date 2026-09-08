@@ -1,7 +1,7 @@
 # Arch Linux build setup
 
-Status: dependency preflight passes; initial source/dependency fetch is running;
-browser builds remain pending.
+Status: dependency preflight, pinned source/dependency fetch, hooks, and GN
+generation pass. The first unmodified browser build is running.
 Python 3.11+ is needed for the bootstrap tool's standard-library TOML reader.
 
 ## Dependencies
@@ -14,14 +14,15 @@ mapping `pkgconfig` to Arch's `pkgconf`, and also checks Git.
 python3 mb/tools/bootstrap.py doctor
 ```
 
-On the inspected machine only `gperf` is missing. It generates perfect-hash
-lookup code used by the Chromium build. The user must run:
+The initial inspection found only `gperf` missing. It generates perfect-hash
+lookup code used by the Chromium build. The user installed it with:
 
 ```sh
 sudo pacman -S --needed gperf
 ```
 
-Confirm installation to the engineer, who will verify it before continuing.
+Installation was verified as `gperf 3.3-2` on 2026-09-08. For a fresh machine,
+run the doctor command and install its reported missing official Arch packages.
 No Debian dependency installer or AUR package is needed. Chromium's pinned
 hooks supply its compiler, GN and other tools; absent system Clang/GN packages
 are not a reason to install substitute toolchains.
@@ -69,7 +70,7 @@ python3 mb/tools/upstream.py gen
 python3 mb/tools/upstream.py build --jobs 4
 ```
 
-These commands are implemented but have not yet passed on this machine. Each
+Hooks and GN generation have passed on this machine; the build is running. Each
 stage verifies both Git pins plus nested Git dependency revisions and requires
 clean tracked/untracked source, then
 writes a timestamped log and result receipt under `.build/logs`. Do not run
@@ -82,6 +83,10 @@ arguments are checked in at `mb/tools/gn/upstream-debug.gn`: debug component
 build, symbol level 1, Blink/V8 symbols 0, local Siso, X11 enabled, unbranded.
 Codec and security settings remain upstream defaults. `gn gen` rejects unused
 arguments, and `autoninja -j 4` maps to four local Siso jobs at this tool pin.
+Four jobs are a conservative starting point. After observing low memory pressure
+and 12 GiB available RAM, this machine's active build was safely interrupted and
+resumed with `python3 mb/tools/upstream.py build --jobs 8`, reusing completed
+outputs. The current command and logs are in STATUS.md.
 
 The first output is intended at `src/out/mb-debug`. Record the active stage in
 STATUS.md before compilation and watch free disk/RAM during the build. The
@@ -101,6 +106,15 @@ and does not rehash every extracted toolchain file before each invocation.
 Launch using `--ozone-platform=x11` and a newly created private test user-data
 directory. Follow [the baseline test protocol](testing.md) to verify the runtime
 sandbox and real X11 behavior. Never use existing Chromium data for smoke tests.
+The scoped driver is ready to run after a successful build receipt exists:
+
+```sh
+python3 mb/tools/upstream_smoke.py --build-receipt .build/logs/upstream-build-TIMESTAMP.json
+```
+
+It checks the binary's SHA-256 against the receipt and revalidates source pins,
+then targets only the new test browser's PID/window. Screenshot and sandbox
+evidence still require inspection before the baseline gate can pass.
 
 Release output will use `src/out/mb-release`. Release commands, product
 integration and Arch packaging will be added and exercised in their phases;

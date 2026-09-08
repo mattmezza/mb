@@ -266,7 +266,7 @@ evidence and any failures; the presence of files alone is not a pass.
 
 ## Pending evidence matrix
 
-All rows are pending while Phase 1 fetching and the first upstream build remain
+Browser rows remain pending while the first upstream build and launch are
 incomplete. “Automated” means a repeatable product-owned test or command with an
 asserted result. “Manual/observed” means dated direct inspection by an operator
 or agent, supported by screenshots or logs.
@@ -275,10 +275,32 @@ or agent, supported by screenshots or logs.
 | --- | --- | --- | --- |
 | Upstream startup, navigation, tabs, shutdown | PID-scoped launch/process checks; future smoke assertions | X11 window, page, tab switching, clean-close observation | Pending Phase 1 |
 | Sandbox | `/proc` renderer status and command-line capture | `chrome://sandbox` inspection | Pending Phase 1 |
-| Product configuration | Parser, schema, diagnostics, and path tests | Restart/reload and error presentation | Pending Phase 4; product code absent |
-| Named environments | Isolation, collision, locking, cookie/history/storage tests | Two concurrent environment workflows | Pending Phase 4; product code absent |
+| Product configuration | Parser/schema and compiled control-command tests pass | Browser restart/reload and error presentation | Standalone code tested; browser integration pending |
+| Named environments | Path/collision/secure-creation tests pass; browser locking and storage tests pending | Two concurrent environment workflows | Standalone path core tested; browser integration pending |
 | Product tab sidebar | Model/browser tests, keyboard operations, 100-tab measurements | Mouse, focus, resize, drag, state and accessibility checks | Pending Phase 3; product code absent |
 | Incognito | Off-the-record and persistence assertions | Normal/incognito distinction and workflow | Pending Phases 4–5 |
 | Extensions | MV3 load, service worker, content script, storage and isolation tests | Action UI, permissions, enable/disable/removal and extension DevTools | Pending Phase 5 |
 | DevTools | Future browser tests for opening and inspected targets | Shortcuts, context Inspect, panels and docking in normal/incognito windows | Pending baseline smoke and Phase 5 depth |
 | Linux/X11 integration | Targeted checks where Chromium exposes test hooks | Clipboard, IME, HiDPI, multiple monitors/windows, file picker, notifications, URL activation and desktop integration | Pending Phase 5 |
+
+## Standalone product checks
+
+Observed on this Arch machine on 2026-09-08:
+
+| Command | Result |
+| --- | --- |
+| `python3 -m unittest mb.test.test_upstream_tools mb.test.test_branding -v` | 19 passed; includes generated-header compilation and actual pinned GN evaluation |
+| `python3 mb/tools/test_startup_arguments.py` | 8 GoogleTests passed |
+| `python3 mb/tools/test_config.py` | 15 GoogleTests passed, including excessive nesting and malformed UTF-8 |
+| `python3 mb/tools/test_environment_paths.py` | 22 GoogleTests passed, including concurrent creation, permissions, symlinks and path lengths |
+| `python3 mb/tools/build_control.py` then `python3 -m unittest mb.test.test_control -v` | Compiled companion and 17 command-level tests passed |
+
+The C++ checks use C++20, disabled exceptions/RTTI, and the pinned Clang. Outputs
+are under `.build/`; no files are added to the Chromium checkout by these tests.
+Parser and environment tests use the fetched Chromium GoogleTest source with
+the host C++ standard library. GN/libc++ integration remains a later gate.
+
+The parser's vendor patch was applied to a disposable copy of its pinned
+upstream single header and reproduced the checked-in header byte for byte.
+These results establish standalone behavior only; they do not establish browser
+isolation, sandboxing, extension compatibility, or a working product UI.

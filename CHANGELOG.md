@@ -11,4 +11,10 @@
 - Add centralized branding and tested C++/GN/resource/desktop metadata generation.
 - Prepare a build-receipt-bound X11 smoke driver using a fresh isolated test root.
 - Add a compiled, tested argument normalizer for the future early startup hook.
+- Add strict versioned TOML parsing, bounded file loading, and a compiled
+  configuration-validation/environment-inspection companion command.
+- Add secure environment directory resolution, auditing, and preparation with
+  no-follow traversal, private permissions, collision and path-length checks.
+- Bound parser table/value depth and add malformed-input regression coverage.
+- Prepare a local Manifest V3 capability fixture; runtime checks remain pending.
 - Browser integration remains gated on the successful upstream build and launch.

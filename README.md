@@ -21,3 +21,14 @@ The source checkout must build and launch under Xorg with Chromium's sandbox
 enabled before any product integration. All daily-driver acceptance criteria
 remain pending. Required Chromium licenses, notices and credits must accompany
 any eventual distribution; no distributable package is available yet.
+
+The standalone control command is available for development:
+
+```sh
+python3 mb/tools/build_control.py
+.build/control/mbctl --config mb/config/example.toml config validate
+```
+
+It validates TOML and audits environment paths without creating browser data.
+See [configuration](docs/configuration.md) and [environment paths](docs/environments.md)
+for commands, tests, and current integration limits.

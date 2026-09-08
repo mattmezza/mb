@@ -2,7 +2,8 @@
 
 Status: source inspection only. Product implementation is gated on the
 unmodified upstream build and sandboxed X11 launch. The current repository
-contains setup tooling; it does not yet contain a custom browser UI.
+contains setup tooling and compiled standalone product libraries; it does not
+yet contain a custom browser UI.
 
 ## Product boundary
 
@@ -66,9 +67,10 @@ product code must not replace either with ad hoc locks or history deletion.
 
 ## Configuration and identity
 
-One versioned branding manifest will supply all product identity. A separate
-strict, versioned TOML user configuration will control product preferences and
-environment roots. Both are pending implementation. Native sidebar persistence
+One versioned branding manifest supplies generated product identity inputs.
+A separate strict, versioned TOML parser and directory core are implemented and
+tested in isolation, with a compiled control command for validation and path
+inspection. Their browser integration is pending. Native sidebar persistence
 already exists; configuration precedence and runtime persistence must be
 specified together to avoid two competing stores or overwriting user edits.
 
