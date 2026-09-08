@@ -17,7 +17,7 @@ Updated: 2026-09-08.
   and loopback/media fixtures (5) also passed focused checks. Earlier full
   standalone run: 107 passed, `standalone-20260908T100704.408098Z/results.json`.
 - Blockers: none currently; installed dependencies verified. No sudo was run.
-- Resources: approximately 83 GiB free disk, 17 GiB available RAM, 25 GiB unused
+- Resources: approximately 81 GiB free disk, 17 GiB available RAM, 25 GiB unused
   swap. The requested below-100-GiB disk warning was reported. Incremental work
   fits; recheck capacity before a separate release output or large test build.
 - Repository remote: `git@github.com:mattmezza/mb.git`, branch `main`.
@@ -42,14 +42,28 @@ downloads/history/bookmarks/passwords/media/restoration), release-mode build,
 Arch package and maintenance rehearsal remain pending. No daily-driver alpha
 claim has been made.
 
-No build is currently running. Next reviewed integration uses:
+Focused browser-test compilation passed in 34m57s (2,925 actions), receipt
+`.build/logs/product-test-build-20260908T191448.591365Z.json`. Matching no-op
+receipt: `.build/logs/product-test-build-20260908T195158.091571Z.json`.
+The focused browser test passed on actual X11 in 12 seconds:
+`.build/test-evidence/product-browser-tests-20260908T195515.267037Z/results.json`,
+build receipt `.build/logs/product-test-build-20260908T195439.628520Z.json`.
+It checks native tab creation, activation, reordering, navigation and closing.
+The first attempt failed before assertions because TMPDIR exceeded Linux's Unix
+socket limit. Its log and scoped cleanup record remain at
+`.build/test-evidence/product-browser-tests-20260908T195234.345213Z/`.
+The corrected runner uses a short 0700 TMPDIR and checks socket path capacity;
+five runner regression tests pass. This harness result supplements the actual
+production launch gate; it does not establish the remaining UI capabilities.
+
+Next integrate the reviewed local NTP and six browser tests, then:
 
 ```sh
 python3 mb/tools/product.py prepare
 python3 mb/tools/product.py gen
-python3 mb/tools/product.py test --jobs 12
+python3 mb/tools/product.py test-build --targets mb:mb_browser_tests --jobs 12
+python3 mb/tools/browser_tests.py --build-receipt .build/logs/<successful-test-build>.json
 python3 mb/tools/product.py build --jobs 12
-python3 mb/tools/product_smoke.py --build-receipt .build/logs/<successful-product-build>.json
 ```
 
 ## Completed gates and maintenance notes
@@ -75,3 +89,10 @@ F12 and Ctrl+T remain unverified. The latter awaits the local-only NTP.
 Scoped toml++ unsafe-buffer diagnostics are suppressed only around its vendor
 include; parser limits and runtime hardening remain. No sandbox, certificate,
 same-origin or site-isolation protection has been disabled.
+
+Scratch drafts awaiting sequential staging: local NTP at
+`.build/tmp/ntp-work-z97_2drb`, expanded tests at
+`.build/tmp/ntp-protection-work-20260908T`, window adapter at
+`.build/tmp/window-layer-work-20260908T`, product header at
+`.build/tmp/sidebar-work-swh82m0q`, and vertical policy at
+`.build/tmp/sidebar-policy-5pguzvip`. Each requires compilation and runtime review.

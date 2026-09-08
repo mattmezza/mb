@@ -352,6 +352,17 @@ def run_build_stage(args):
     binary = OUTPUT / receipt['product']['executable_name']
     if args.stage == 'build' and outcome.returncode == 0:
         result.update(binary=str(binary), binary_sha256=file_sha(binary))
+    if args.stage == 'test-build' and outcome.returncode == 0:
+        test_outputs = {
+            'mb_unit_tests': OUTPUT / 'mb_unit_tests',
+            'mb_browser_tests': OUTPUT / 'mb_browser_tests',
+            'mb_control': OUTPUT / (receipt['product']['executable_name'] + 'ctl'),
+        }
+        result['test_binaries'] = {
+            name: {'path': str(path), 'sha256': file_sha(path)}
+            for name, path in test_outputs.items()
+            if 'mb:' + name in targets or '//mb:' + name in targets
+        }
     log.with_suffix('.json').write_text(json.dumps(result, indent=2) + '\n')
     if outcome.returncode:
         raise RuntimeError(f'{args.stage} failed ({outcome.returncode}); inspect {log}')

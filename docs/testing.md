@@ -349,27 +349,48 @@ Observed on this Arch machine on 2026-09-08:
 The C++ checks use C++20, disabled exceptions/RTTI, and the pinned Clang. Outputs
 are under `.build/`; no files are added to the Chromium checkout by these tests.
 Parser and environment tests use the fetched Chromium GoogleTest source with
-the host C++ standard library. GN/libc++ integration remains a later gate.
+the host C++ standard library. These historical standalone receipts did not test GN/libc++; the subsequent
+51 GN-built C++ tests passed as recorded in the product baseline.
 
 The parser's vendor patch was applied to a disposable copy of its pinned
 upstream single header and reproduced the checked-in header byte for byte.
 These results establish standalone behavior only; they do not establish browser
 isolation, sandboxing, extension compatibility, or a working product UI.
 
-## Focused browser-test target (pending integration)
+## Focused browser-test target
 
-The pinned `//chrome/test:browser_tests_runner` supplies the existing browser
-test main and launcher without including all upstream test cases. The separate
-`//chrome/test/device_realtarget` executable is an upstream example. The product
-test target will use this runner, `//chrome/test:test_support`,
-`//chrome/test:test_support_ui`, `//chrome:packed_resources`, and its directly
-used product/model/View dependencies. It will retain `InProcessBrowserTest`
-and Chromium's launcher instead of introducing a replacement harness.
+The product `//mb:mb_browser_tests` target uses the pinned
+`//chrome/test:browser_tests_runner`, `test_support`, `test_support_ui`, and packed
+browser resources, with direct dependencies for each test. It uses Chromium's
+`InProcessBrowserTest` and launcher without the aggregate upstream test source list.
+The first shared test-support build passed in 34m57s (2,925 actions).
 
-Test support still requires substantial compilation. The launcher also bypasses
-the production executable's raw `chrome_main.cc` entry point, so early argument
-handling needs its standalone tests and real executable smoke tests. This target
-has not yet been generated or linked; it is the selected integration approach.
+```sh
+python3 mb/tools/product.py prepare
+python3 mb/tools/product.py gen
+python3 mb/tools/product.py test-build --targets mb:mb_browser_tests --jobs 12
+python3 mb/tools/browser_tests.py --build-receipt .build/logs/<successful-test-build>.json
+```
+
+The runner requires a matching integration and recorded test executable hash.
+It uses fresh private TMPDIR/XDG paths, the real X11 display and one launcher job.
+TMPDIR is a short 0700 directory beneath `.build/tmp`: a timestamped nested
+profile path exceeded Linux's Unix socket limit in the first attempt. The
+runner checks the expected socket path capacity before launch.
+Chromium creates each test's user-data root beneath that temporary storage. Child
+CHROME_EXTRA_FLAGS variables are removed; no sandbox-disabling switch is added.
+Retries are disabled, and an empty, skipped, failed or malformed summary does
+not pass. Evidence and launcher logs remain under `.build/test-evidence/`.
+
+The first test passed in 12 seconds on actual X11, with evidence at
+`.build/test-evidence/product-browser-tests-20260908T195515.267037Z/results.json`.
+It covers local navigation and authoritative model creation,
+activation, reordering and closing. New NTP/sidebar tests are prepared separately
+and are not yet compiled or accepted. Test-support compilation is substantial;
+subsequent focused builds reuse it.
+
+The launcher bypasses the production executable's raw `chrome_main.cc` entry
+point, so early argument normalization also needs real executable smoke tests.
 
 The harness still runs the real `ChromeMainDelegate::BasicStartupComplete()` and
 `PreSandboxStartup()`. Its `SetUpUserDataDirectory()` hook runs after Chromium
@@ -379,9 +400,9 @@ at the same root, and append `--config`/`--environment` through CommandLine's
 typed switch methods. The temporary root exists at this point; the Profile does
 not. Tests must exercise the production validator rather than bypass its gate.
 
-The harness redirects XDG cache storage but does not redirect `XDG_CONFIG_HOME`.
-Always supply the fixture config explicitly so tests cannot read the desktop
-user's real configuration. `SetUpOnMainThread()` and local-state preference
+Upstream's harness does not itself redirect `XDG_CONFIG_HOME`; the product
+runner supplies private XDG configuration, data and cache roots. Always supply
+the fixture config explicitly when testing startup integration. `SetUpOnMainThread()` and local-state preference
 setup are too late for this early gate. Renderer/utility test processes skip
 fixture setup, so product configuration initialization must remain browser-only.
 Any auxiliary `--launch-as-browser` test process needs its own explicit inputs.

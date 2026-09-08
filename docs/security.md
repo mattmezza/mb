@@ -1,9 +1,10 @@
 # Security and local-data status
 
-The planned build keeps upstream security controls enabled. No sandbox, site
-isolation, Safe Browsing, or browser feature has been disabled to reduce build
-dependencies. The product integration and browser binary do not yet exist, so
-runtime behavior remains **pending** where noted.
+The built product keeps upstream security controls enabled. No sandbox, site
+isolation or Safe Browsing feature has been disabled to reduce dependencies.
+The actual Xorg launch verified namespace and seccomp sandboxing; see the
+[product baseline](product-baseline-2026-09-08.md). Other runtime behavior remains
+**pending** where noted.
 
 ## Source-backed baseline
 
