@@ -7,4 +7,8 @@
 - Add dependency preflight and guarded source-fetch tooling.
 - Verify installed Arch dependencies and fetch the pinned upstream checkout.
 - Add logged upstream hook/generation/build stages and a scoped X11 test protocol.
-- Browser implementation and upstream build remain pending dependency sync.
+- Complete pinned dependency sync, hooks, and GN generation; upstream build is running.
+- Add centralized branding and tested C++/GN/resource/desktop metadata generation.
+- Prepare a build-receipt-bound X11 smoke driver using a fresh isolated test root.
+- Add a compiled, tested argument normalizer for the future early startup hook.
+- Browser integration remains gated on the successful upstream build and launch.

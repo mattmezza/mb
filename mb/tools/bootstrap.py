@@ -103,7 +103,8 @@ def fetch():
     scratch = BUILD / "tmp"
     scratch.mkdir(parents=True, exist_ok=True)
     env = dict(os.environ, PATH=f"{DEPOT}:{DEPOT / 'python-bin'}:{os.environ.get('PATH', '')}",
-               DEPOT_TOOLS_UPDATE="0", DEPOT_TOOLS_METRICS="0", TMPDIR=str(scratch))
+               DEPOT_TOOLS_UPDATE="0", DEPOT_TOOLS_METRICS="0",
+               PYTHONUNBUFFERED="1", TMPDIR=str(scratch))
     ensure_repo(DEPOT, pins["depot_tools"], pins["depot_tools"]["commit"])
     # Disabling depot_tools auto-update also skips its normal Python bootstrap.
     # Invoke the checked-in bootstrap explicitly without moving the Git pin.

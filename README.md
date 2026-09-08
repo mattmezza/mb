@@ -1,8 +1,9 @@
 # Browser fork workspace
 
 This repository is preparing a direct Chromium fork for Linux/X11. There is no
-custom browser binary yet. The product's temporary identity will be defined by
-one branding manifest after the unmodified upstream build passes.
+custom browser binary yet. The product's temporary identity is centralized in
+[one branding manifest](mb/branding.toml); its tested generator prepares build
+inputs separately from the unmodified Chromium checkout.
 
 Start with [STATUS.md](STATUS.md) and the
 [implementation plan](docs/implementation-plan.md). The Chromium source and

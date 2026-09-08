@@ -5,6 +5,7 @@ import argparse
 import ast
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -113,6 +114,9 @@ def run_logged(command, env, stage, pins, dependencies):
         "git_dependencies": dependencies,
         "args_gn": (OUTPUT / "args.gn").read_text() if (OUTPUT / "args.gn").exists() else None,
     }
+    if stage == "build" and result.returncode == 0:
+        with (OUTPUT / "chrome").open("rb") as binary:
+            receipt["binary_sha256"] = hashlib.file_digest(binary, "sha256").hexdigest()
     path.with_suffix(".json").write_text(json.dumps(receipt, indent=2) + "\n")
     if result.returncode:
         with path.open() as stream:
@@ -138,7 +142,8 @@ def main():
         scratch = BUILD / "tmp"
         scratch.mkdir(exist_ok=True)
         env = dict(os.environ, PATH=f"{DEPOT}:{DEPOT / 'python-bin'}:{os.environ.get('PATH', '')}",
-                   DEPOT_TOOLS_UPDATE="0", DEPOT_TOOLS_METRICS="0", TMPDIR=str(scratch))
+                   DEPOT_TOOLS_UPDATE="0", DEPOT_TOOLS_METRICS="0",
+                   PYTHONUNBUFFERED="1", TMPDIR=str(scratch))
         if args.stage == "hooks":
             command = [str(DEPOT / "gclient"), "runhooks", "--jobs=4"]
         else:
