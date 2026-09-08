@@ -1,0 +1,34 @@
+Name: toml++
+URL: https://github.com/marzer/tomlplusplus
+Version: v3.4.0
+Revision: 30172438cee64926dc41fdd9c11fb3ba5b2ba9de
+Selection date: 2026-09-08
+License: MIT
+License File: LICENSE
+Security Critical: yes
+Shipped: yes
+
+This directory vendors the official v3.4.0 `toml.hpp` single-header release.
+It was fetched from the official source archive:
+https://github.com/marzer/tomlplusplus/archive/refs/tags/v3.4.0.tar.gz
+
+Source archive SHA-256:
+8517f65938a4faae9ccf8ebb36631a38c1cadfb5efa85d9a72e15b9e97d25155
+
+Original upstream toml.hpp SHA-256:
+6b5172ad4dd6519aec67b919181fa7a38a2234131e5b2afa232dfe444819783e
+
+Local Modifications:
+Apply key-component-limit.patch to the original single header. It introduces
+an optional TOML_MAX_KEY_COMPONENTS guard before allocating dotted-key tables.
+Our parser sets this and TOML_MAX_NESTED_VALUES to 16. The upstream value-depth
+guard alone does not bound dotted table headers: a local 30,000-component input
+caused recursive table destruction to exhaust the stack. Valid schema documents
+need far fewer levels. The bounded input now returns a normal parse diagnostic.
+
+The configuration core also defines TOML_EXCEPTIONS=0 before including toml.hpp
+and is compiled with -fno-exceptions and -fno-rtti. No Chromium dependency was
+modified; this is the product-owned vendored parser.
+
+Patched toml.hpp SHA-256:
+e41198eefff5c17cb154325d1698d67708ee1c81e0344fec5b35df08847df257

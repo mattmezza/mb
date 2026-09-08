@@ -1,0 +1,15 @@
+--- a/toml.hpp
++++ b/toml.hpp
+@@ -15527,6 +15527,12 @@
+ 				consume_leading_whitespace();
+ 
+ 				// store segment
++#if defined(TOML_MAX_KEY_COMPONENTS)
++				if TOML_UNLIKELY(key_buffer.size() >= TOML_MAX_KEY_COMPONENTS)
++					set_error_and_return_default("exceeded maximum key component count of "sv,
++											 TOML_MAX_KEY_COMPONENTS,
++											 " (TOML_MAX_KEY_COMPONENTS)"sv);
++#endif
+ 				key_buffer.push_back(key_segment, key_begin, key_end);
+ 
+ 				// eof or no more key to come
