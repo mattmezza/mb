@@ -23,12 +23,12 @@ Updated: 2026-09-08.
 ## Active build
 
 ```sh
-python3 mb/tools/upstream.py build --jobs 10
+python3 mb/tools/upstream.py build --jobs 12
 ```
 
 This command is already running; inspect its log before starting another build:
-`.build/logs/upstream-build-20260908T110604.504034Z.log`.
-It runs pinned `autoninja -C out/mb-debug -j 10 chrome` from `.build/chromium/src`.
+`.build/logs/upstream-build-20260908T112027.558220Z.log`.
+It runs pinned `autoninja -C out/mb-debug -j 12 chrome` from `.build/chromium/src`.
 The successful receipt will be written beside the log and include the binary hash.
 
 Pinned Linux stable: Chromium 152.0.7977.82,
@@ -45,12 +45,18 @@ receipt is `upstream-build-20260908T080510.178925Z.json`; it is not a successful
 build receipt. The eight-job run was then intentionally interrupted after 2h19m28s,
 with 17,864 additional completed actions, zero compiler failures and 33,098 remaining,
 to resume at ten jobs after the heavy V8 compilation finished. Its exit-1 receipt is
-`upstream-build-20260908T084625.389068Z.json`. Completed outputs were preserved.
+`upstream-build-20260908T084625.389068Z.json`. The ten-job run completed 1,933
+more actions in 14m08s, with zero compiler failures, before the final increase to
+twelve jobs. Its intentional-interruption receipt is
+`upstream-build-20260908T110604.504034Z.json`. Completed outputs were preserved.
 
-Latest resource check: approximately 101 GiB free disk, 10 GiB available RAM,
+Latest resource check: approximately 99.6 GiB free disk, 9.4 GiB available RAM,
 28 GiB unused swap, low memory pressure. Total RAM is 30.8 GiB and total swap
 47 GiB. The laptop is on AC power; CPU policy caps performance cores at 2 GHz.
-Use `.build/tmp` for build scratch. Recheck resources before each milestone.
+The requested 100 GiB free-space warning threshold has been crossed during
+compilation; the user was informed. Capacity is not currently blocking this
+already-fetched build. Use `.build/tmp` for build scratch and continue monitoring.
+Recheck resources before each milestone, especially a second release output.
 
 ## Prepared and tested outside Chromium
 
@@ -79,7 +85,7 @@ See [testing](docs/testing.md) for individual checks and
 After the active compile succeeds, verify the successful receipt and run:
 
 ```sh
-python3 mb/tools/upstream_smoke.py --build-receipt .build/logs/upstream-build-20260908T110604.504034Z.json
+python3 mb/tools/upstream_smoke.py --build-receipt .build/logs/upstream-build-20260908T112027.558220Z.json
 ```
 
 Inspect the resulting screenshots and record navigation, DevTools, browser-reported

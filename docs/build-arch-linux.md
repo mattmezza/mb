@@ -87,7 +87,9 @@ Four jobs are a conservative starting point. After observing low memory pressure
 and 12 GiB available RAM, this machine's active build was safely interrupted and
 resumed with `python3 mb/tools/upstream.py build --jobs 8`, reusing completed
 outputs. After the heavy V8 compilation finished and about 11 GiB RAM was
-available, it was resumed at ten jobs. The current command and logs are in STATUS.md.
+available, it was resumed at ten jobs. A subsequent compiler-memory check found
+about 3.6 GiB combined RSS and little CPU contention, allowing twelve jobs while
+retaining memory headroom. The current command and logs are in STATUS.md.
 
 The first output is intended at `src/out/mb-debug`. Record the active stage in
 STATUS.md before compilation and watch free disk/RAM during the build. The
