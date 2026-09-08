@@ -39,3 +39,16 @@ first release scope. Release updates will use package replacement.
 Daily-driver acceptance remains incomplete. Standalone test
 success is recorded separately from browser capability evidence in
 [testing](testing.md).
+
+The 100-tab debug correctness case passes, but responsiveness does not yet pass:
+loaded selection plus the test's idle/layout wait measured 298–524 ms, and bulk
+startup of 100 local pages is visibly slow. See [measured scope](testing.md).
+Four native DevTools browser tests pass; full panel and extension-debugging
+coverage remains pending.
+
+Production debug bulk startup with 100 local data pages also failed its loading
+review: a network-service restart/rebind was logged and most pages stayed
+Loading for minutes; individually reloaded first/last pages rendered. Cause is
+unresolved. Evidence: `sidebar-input-20260908T214054.271075Z/review.json`.
+The same run closed normally with exit 0. No network or sandbox changes were
+made to bypass it.

@@ -112,6 +112,8 @@ test("mb_browser_tests") {
   defines = [ "HAS_OUT_OF_PROC_TEST_RUNNER" ]
   sources = [
     "test/browser_window_adapter_browsertest.cc",
+    "test/devtools_browsertest.cc",
+    "test/sidebar_scale_browsertest.cc",
     "test/tab_baseline_browsertest.cc",
     "ui/new_tab/new_tab_ui_browsertest.cc",
     "ui/sidebar/sidebar_view_browsertest.cc",
@@ -122,8 +124,11 @@ test("mb_browser_tests") {
     "//base/test:test_support",
     "//chrome/app:command_ids",
     "//chrome/browser",
+    "//chrome/browser/devtools",
+    "//chrome/browser/devtools:test_support",
     "//chrome/browser/extensions:test_support",
     "//chrome/browser/profiles:profile",
+    "//chrome/browser/renderer_context_menu:test_support",
     "//chrome/browser/search_engines",
     "//chrome/browser/ui",
     "//chrome/browser/ui:browser_actions",

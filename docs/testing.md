@@ -429,3 +429,44 @@ Its unpacked code has passed JSON/scope and Node syntax checks. The fixture
 server's five route/content tests pass with
 `python3 -m unittest mb.test.test_fixture_server -v`. Browser behavior for both
 fixtures is pending; JavaScript syntax checks are not runtime verification.
+
+
+## DevTools and 100-tab measurements (2026-09-08)
+
+Four focused DevTools cases pass: native command opening/closing, the actual
+frontend's off-the-record browser context, docked/undocked windows, and the
+native page-context Inspect command. These exercise native command paths;
+actual F12 and Ctrl+Shift+I input are recorded in the sidebar Xorg review.
+They do not establish every DevTools panel or extension-debugging workflow.
+Test build: `.build/logs/product-test-build-20260908T211909.116247Z.json`.
+Combined five-case run: `product-browser-tests-20260908T212019.167559Z`.
+
+The scale case creates 100 real native-model tabs, checks the sidebar projection,
+selects, reorders and closes a tab, then restores the count and selects after
+all local pages finish loading. Correctness passes. Performance is not accepted.
+The first run's GoogleTest properties were omitted by Chromium's custom XML
+writer. Instrumentation now uses `base::AddTagToTestResult`; retain the native
+`tags` in the launcher's `summary.json`.
+
+Latest measured run: `product-browser-tests-20260908T213237.269243Z`;
+build `.build/logs/product-test-build-20260908T213104.109228Z.json`.
+
+| Operation | Debug wall time |
+| --- | ---: |
+| Insert 99 tabs into the initial window | 17.835 s |
+| Subsequent projection/layout wait | 14.644 s |
+| First selection plus projection/layout wait | 1.357 s |
+| Reorder plus projection/layout wait | 0.768 s |
+| Close plus projection/layout wait | 1.009 s |
+| Loaded selections at indices 0 / 99 / 50 | 298 / 524 / 486 ms |
+
+These are debug component-build samples, not compositor presentation timings
+or a release-performance result. `base::test::RunUntil` first evaluates its
+predicate at the next UI-thread idle, so the samples include queued browser
+work. `RunScheduledLayouts` lays out all dirty widgets; it does not deliberately
+sleep or await animation completion. The projection's model/anchor checks do
+not prove the selected item has scrolled into view or reached a presented frame.
+Further instrumentation will preserve these totals while separating native
+operation, idle wait and actual layout costs. Slow debug behavior remains a
+known issue until measured and addressed; a passing correctness assertion is
+not a responsiveness pass.

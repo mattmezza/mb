@@ -40,3 +40,6 @@
   vertical orientation for normal Linux windows. Pass initial browser tests and
   reviewed pin/drag/group/collapse/resize/F12/Xorg checks with the sandbox enabled.
   Correct a visually detected header layout bug and retain all failed evidence.
+- Verify four native DevTools command/context/private/docking cases and 100-tab
+  model operations; record slow debug timing samples without claiming
+  responsiveness or complete DevTools compatibility.

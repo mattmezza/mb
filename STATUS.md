@@ -26,34 +26,38 @@ Updated: 2026-09-08.
 
 ## Current checkpoint and next work
 
-The native product SidebarView has a compact manifest header, live tab count,
-command menu and one TabStripModel projection. Fixed vertical policy covers
-normal Linux windows, commands, menus and Settings. The first reviewed Xorg
-checks cover tab creation/selection, pinning, drag reorder, close/reopen, native
-groups, collapse/expand, mouse resize, F12 DevTools and sandbox protection.
-See [the dated sidebar review](docs/sidebar-baseline-2026-09-08.md) for exact
-scope, screenshots, build failures, the corrected header layout bug and two
-scratch input-harness cleanup failures. Clean exit comes from the final,
-separate production smoke against the identical binary.
+The initial native sidebar checkpoint passed, including basic Xorg tab inputs,
+pinning/reorder/groups, resize/collapse and F12. See the dated sidebar review.
+Four broader DevTools browser cases and 100-tab model correctness now pass.
+The scale result does not establish responsiveness: loaded selection plus
+idle/layout wait measured 298–524 ms. Latest evidence:
+`.build/test-evidence/product-browser-tests-20260908T213237.269243Z/summary.json`.
+Latest test build: `.build/logs/product-test-build-20260908T213104.109228Z.json`.
+Latest production build: `.build/logs/product-build-20260908T213916.731086Z.json`.
 
-Next: add the prepared 100-tab measurement and broader DevTools tests, compile
-and run them. Finish sidebar keyboard/accessibility and loading/crash/audio/mute
-coverage. Remove inherited AI Mode/unsupported customization affordances and
-route local NTP favicon requests to the generated original product artwork.
-Each integration must compile and pass focused runtime/visual checks.
+Production 100-local-page startup failed loading/performance review. After a
+network-service restart/rebind log, most tabs remained Loading for minutes;
+reloading first/last pages worked. Native close-window exited 0. Evidence:
+`.build/test-evidence/sidebar-input-20260908T214054.271075Z/review.json`.
+An earlier 20-second scratch startup timeout and scoped cleanup failure are
+retained at `sidebar-input-20260908T213945.201798Z`. No network/security bypass.
+Cause is unresolved; add native operation/idle/layout timing decomposition and
+child-process lifecycle diagnostics. No browser or build currently runs.
 
-Exact next integration/build commands, after reviewing/copying the scratch tests
-and adding their documented GN sources/dependencies:
+Next: compile/run keyboard/AX and loading/crash/audio tests, then the decomposed
+scale measurement. Review AI/customization removal and generated NTP favicon.
+Exact commands after each reviewed source integration:
 
 ```sh
 python3 mb/tools/product.py prepare
 python3 mb/tools/product.py gen
 python3 mb/tools/product.py test-build --targets mb:mb_browser_tests --jobs 12
-python3 mb/tools/browser_tests.py --build-receipt .build/logs/<successful-test-build>.json --filter 'MbSidebarScaleBrowserTest.*:MbDevToolsBrowserTest.*'
+python3 mb/tools/browser_tests.py --build-receipt .build/logs/<successful-test-build>.json --filter 'MbSidebarAccessibilityBrowserTest.*:MbSidebarStateBrowserTest.*'
 ```
 
-No owned test browser or build is running at this checkpoint. Do not launch old
-`out/mb-debug/chrome`: shared libraries/resources now contain product integration.
+Do not run builds while product browser processes/tests use shared libraries.
+Do not launch the old `out/mb-debug/chrome`: resources/shared libraries now carry
+product integration.
 
 ## Later phases
 
@@ -80,7 +84,8 @@ No daily-driver alpha claim has been made. Security protections remain enabled.
   harness tests pass; no browser execution).
 - MV3 capability tests/fixture hooks: `.build/tmp/extensions-capability-20260908T`.
 - Incognito cookie/history tests: `.build/tmp/incognito-tests-voabnycf`.
-- Sidebar accessibility/keyboard draft: agent preparation in progress.
+- Sidebar accessibility/keyboard draft: `.build/tmp/sidebar-accessibility-ZJrDi1`
+  (requires correction/review of native vertical tab type before integration).
 
 Scratch recipes/helpers are review aids, not accepted browser implementations.
 Use successful build receipts matching the exact current staged integration.
