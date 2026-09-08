@@ -28,6 +28,22 @@ runtime behavior remains **pending** where noted.
 
 ## Pending runtime checks
 
+Separate environment roots isolate browser databases; they are not separate OS
+accounts or a promise of distinct encryption keys. The pinned Linux Freedesktop
+provider uses an OS-wide application attribute or KWallet folder/key. Its display
+name argument does not change those lookup identifiers. Product integration must
+give those identifiers a stable product namespace through the existing provider,
+without changing encryption algorithms or accessing installed Chromium entries.
+Changing persistent lookup identifiers after credentials exist requires migration.
+
+The Secret Portal provider stores token/status preferences in root-local
+`Local State`, but the portal supplies the secret and exposes no product-identity
+argument in this Chromium API. Separate roots therefore do not establish separate
+portal secrets. At this pin portal encryption is disabled by default while its
+decryption provider remains enabled. The lower-priority POSIX provider retains
+Chromium's fixed compatibility key. These upstream behaviors have not been
+changed; actual keyring/portal behavior and product identity are unverified.
+
 - `chrome://sandbox` and a normal multi-process launch confirm the effective
   Linux sandbox configuration.
 - Cross-site frame/navigation behavior confirms effective site isolation with
