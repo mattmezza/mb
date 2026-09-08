@@ -470,3 +470,33 @@ Further instrumentation will preserve these totals while separating native
 operation, idle wait and actual layout costs. Slow debug behavior remains a
 known issue until measured and addressed; a passing correctness assertion is
 not a responsiveness pass.
+
+## Sidebar state and keyboard coverage
+
+The five-case run `product-browser-tests-20260908T215044.420082Z` passed
+native AX names/selected state, controlled waiting/loading/completion indicators,
+owned renderer crash/recovery on the same WebContents and tab view, and real
+loopback WAV playback with native audibility/mute/unmute indicators. Audio used
+the pinned upstream `chrome/test/data/media/pink_noise_140ms.wav`, normal test
+user gesture, and the existing audio service; no fake audibility or autoplay
+bypass. Crash allowance covered only the test-owned renderer.
+
+The Return-key case initially failed its post-activation focus assertion.
+Activation itself succeeded. Inspection of BrowserView::OnActiveTabChanged
+confirmed native selected-WebContents focus restoration; the revised case waits
+for the local page to load and asserts focus inside the actual active contents
+view. Both AX/keyboard cases pass in the subsequent
+`product-browser-tests-20260908T215551.366276Z` run (all three cases passed).
+These are native view/state checks, not AT-SPI/screen-reader certification,
+crash-icon pixel testing, or pointer hit-testing of the mute button.
+
+The expanded scale run passed native model/view/presentation correctness, while
+performance remains open. Decomposition in the same run reports loaded native
+activation itself at 249 / 239 / 290 ms; the first idle boundary adds 44 / 196 /
+224 ms. The subsequent forced all-widget layout takes 64 / 0.4 / 0.4 ms.
+This confirms substantial synchronous activation work; queued work contributes
+additional delay. A separate pass requires actual TabView::IsActive plus full
+viewport containment, then requests a subsequent successful frame: 523 / 458 /
+547 ms from activation start, with native presentation flags 0. These are
+subsequent-frame checkpoints, not earliest-frame or hardware input latency.
+No animations or browser services are bypassed.

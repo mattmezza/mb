@@ -43,3 +43,6 @@
 - Verify four native DevTools command/context/private/docking cases and 100-tab
   model operations; record slow debug timing samples without claiming
   responsiveness or complete DevTools compatibility.
+- Verify native sidebar accessibility/Return focus, loading transitions, renderer
+  recovery and real local audio/mute state. Decompose 100-tab timing and verify
+  a native visibility/presentation checkpoint; retain unresolved debug latency.

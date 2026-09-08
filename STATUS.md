@@ -5,21 +5,22 @@ Updated: 2026-09-08.
 - Current phase: Phase 3, native custom UI. Phases 1–2 passed. The first sidebar
   browser/Xorg input checkpoint passed; Phase 3 is not complete.
 - Last successful browser build:
-  `.build/logs/product-build-20260908T205919.455231Z.json`.
-- Last successful browser launch/test: sandboxed Xorg production smoke, normal
+  `.build/logs/product-build-20260908T213916.731086Z.json` (no-op, same reviewed binary).
+- Last successful full product smoke: sandboxed Xorg production smoke, normal
   shutdown exit 0; `.build/test-evidence/product-20260908T211150.370203Z/review.json`.
-- Last focused tests: 11 browser tests passed in 129s before the two small sidebar
-  follow-ups; each follow-up passed all three sidebar tests. Latest:
-  `.build/test-evidence/product-browser-tests-20260908T205809.598441Z/results.json`.
-  Its build: `.build/logs/product-test-build-20260908T205630.672359Z.json`.
+- Last focused test build:
+  `.build/logs/product-test-build-20260908T214855.527805Z.json`.
+- Last successful focused run: 100-tab correctness with slow debug measurements,
+  `product-browser-tests-20260908T213237.269243Z`. The five new AX/state cases are
+  running at `product-browser-tests-20260908T215044.420082Z`.
 - Product core: 51 Chromium-built C++ tests and 17 companion end-to-end checks
   passed at `.build/test-evidence/product-unit-20260908T184731.229729Z/`.
   Latest tool suite: 18 integration/GRIT/runner checks passed at
   `standalone-20260908T200445.214481Z/results.json`. Earlier full standalone: 107
   passed at `standalone-20260908T100704.408098Z/results.json`.
 - Blockers: none currently; dependencies installed and verified. No sudo run.
-- Resources: about 81 GiB free disk, 10 GiB available RAM and 24 GiB unused swap
-  during the last UI build. The below-100-GiB warning was reported. Recheck before
+- Resources: about 78 GiB free disk, 17 GiB available RAM and 24 GiB unused swap
+  after the last UI review. The below-100-GiB warning was reported. Recheck before
   a separate release output or large test build.
 - Remote: `git@github.com:mattmezza/mb.git`, branch `main`. `.build/` is ignored.
   Unrelated root `test/pages/README.md` and `.tmux-session` remain untouched.
@@ -42,7 +43,8 @@ reloading first/last pages worked. Native close-window exited 0. Evidence:
 An earlier 20-second scratch startup timeout and scoped cleanup failure are
 retained at `sidebar-input-20260908T213945.201798Z`. No network/security bypass.
 Cause is unresolved; add native operation/idle/layout timing decomposition and
-child-process lifecycle diagnostics. No browser or build currently runs.
+child-process lifecycle diagnostics. No browser is running. The five AX/state cases are integrated and the
+focused test build is next.
 
 Next: compile/run keyboard/AX and loading/crash/audio tests, then the decomposed
 scale measurement. Review AI/customization removal and generated NTP favicon.
@@ -104,3 +106,27 @@ Integration verifies pinned revisions and 165 nested Git dependencies, refuses
 unrelated edits, stages manifest-derived resources with unchanged native GRIT
 IDs, and records build/test hashes. Real credits include toml++. No sandbox,
 certificate, same-origin or site-isolation protection has been disabled.
+
+AX/state test build passed: `.build/logs/product-test-build-20260908T214855.527805Z.json`.
+Running the five new cases with the filtered command above. No concurrent build.
+
+Five-case run finished 4/5: AX names/selection, loading, owned renderer crash
+recovery and real audio/mute passed; Return activated correctly but the draft
+incorrectly expected focus to remain on the tab. Native BrowserView restores
+selected-page focus. The corrected test waits for load and asserts that real
+focus destination. Scale timing decomposition and a separate actual native
+visibility/next-presented-frame checkpoint are integrated for the next build.
+Exact next commands: prepare, gen, test-build, then filter
+`MbSidebarAccessibilityBrowserTest.*:MbSidebarScaleBrowserTest.*`.
+
+Corrected AX + decomposed scale test build passed:
+`.build/logs/product-test-build-20260908T215428.811022Z.json`.
+Running filter `MbSidebarAccessibilityBrowserTest.*:MbSidebarScaleBrowserTest.*`.
+
+Corrected AX and expanded scale run passed 3/3:
+`product-browser-tests-20260908T215551.366276Z`. Native loaded activation costs
+239–290 ms before return, so performance remains open; next requested frames
+arrived at458–547 ms (flags0). Trace existing native scopes next to attribute
+that synchronous work. State cases passed separately in the previous run.
+Next isolated diagnostic:100actualdata pages after ready browser, recording
+network-service child lifecycle/exit status, then AI/customize/favicon cleanup.
