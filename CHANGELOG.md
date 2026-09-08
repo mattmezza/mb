@@ -17,4 +17,12 @@
   no-follow traversal, private permissions, collision and path-length checks.
 - Bound parser table/value depth and add malformed-input regression coverage.
 - Prepare a local Manifest V3 capability fixture; runtime checks remain pending.
+- Add loopback pages for storage-isolation, download, audio and permission checks.
+- Generate original native icon assets and pinned GRIT strings while preserving
+  resource IDs, translations and attribution. Reserve the custom URL scheme
+  until a browser handler exists.
+- Compose a runtime configuration snapshot with explicit/remembered/default
+  selection, all-environment auditing and no directory creation.
+- Add a logged focused-test runner; all 107 standalone tests pass using the
+  pinned Python interpreter, including fresh product C++ builds.
 - Browser integration remains gated on the successful upstream build and launch.

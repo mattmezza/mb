@@ -32,3 +32,13 @@ python3 mb/tools/build_control.py
 It validates TOML and audits environment paths without creating browser data.
 See [configuration](docs/configuration.md) and [environment paths](docs/environments.md)
 for commands, tests, and current integration limits.
+
+After source bootstrap and hooks, run the standalone product checks with:
+
+```sh
+.build/depot_tools/python-bin/python3 mb/tools/test_product.py
+```
+
+Use `--list` to inspect commands or `--suite` to select focused checks. The
+[test record](docs/testing.md) distinguishes these results from pending browser
+runtime verification.
