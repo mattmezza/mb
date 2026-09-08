@@ -80,6 +80,7 @@ def main(*, product_build=False):
     args = parser.parse_args()
     browser = None
     evidence = None
+    capture = None
     result = {"automated_checks": [], "observed_checks": "pending screenshot review"}
     log = None
     try:
@@ -256,6 +257,7 @@ def main(*, product_build=False):
         time.sleep(10)
         capture("03-devtools-review-required")
         key("ctrl+shift+i")
+        capture("03-devtools-after-toggle-review-required")
         navigate("chrome://sandbox", "Sandbox")
         capture("04-sandbox")
         processes = []
@@ -303,6 +305,11 @@ def main(*, product_build=False):
     except (RuntimeError, OSError, ValueError, subprocess.SubprocessError) as error:
         result["automated_result"] = "failed"
         result["error"] = str(error)
+        if capture is not None and browser is not None and browser.poll() is None:
+            try:
+                capture("failure")
+            except (RuntimeError, OSError, ValueError, subprocess.SubprocessError) as capture_error:
+                result["failure_capture_error"] = str(capture_error)
         print(f"error: {error}", file=sys.stderr)
         return 1
     finally:

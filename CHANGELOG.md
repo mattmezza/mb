@@ -30,3 +30,6 @@
   data-URL debug assertion failure in the dated review; begin Phase 2 integration.
 - Add a read-only stable-release candidate checker and document the upstream
   update procedure, packaging payload requirements and real-credits build gate.
+
+- Pass the branded debug browser Xorg smoke with manifest window identity, original
+  version artwork, native sandbox evidence and clean shutdown; retain prior failures.

@@ -1,9 +1,10 @@
 # Browser fork workspace
 
-This repository is preparing a direct Chromium fork for Linux/X11. There is no
-custom browser binary yet. The product's temporary identity is centralized in
-[one branding manifest](mb/branding.toml); its tested generator prepares build
-inputs separately from the unmodified Chromium checkout.
+This repository is preparing a direct Chromium fork for Linux/X11. A product
+browser build, focused GN tests and scoped sandboxed Xorg launch have passed.
+The product's temporary identity is centralized in [one
+branding manifest](mb/branding.toml); its tested generator prepares build inputs
+separately from the unmodified Chromium checkout.
 
 Start with [STATUS.md](STATUS.md) and the
 [implementation plan](docs/implementation-plan.md). The Chromium source and
@@ -19,9 +20,11 @@ The existing `.tmux-session` file is user-owned and has not been changed.
 
 The pinned, unmodified source built and passed a sandboxed launch on the actual
 Xorg session; see the [baseline review](docs/upstream-baseline-2026-09-08.md).
-Product branding integration is now in progress. All daily-driver acceptance criteria
-remain pending. Required Chromium licenses, notices and credits must accompany
-any eventual distribution; no distributable package is available yet.
+Product branding integration has produced a successful debug build and focused
+test receipts and a [reviewed product launch](docs/product-baseline-2026-09-08.md).
+The full daily-driver acceptance remains pending. Required Chromium licenses,
+notices and credits must accompany any eventual distribution; no distributable
+package is available yet.
 
 The standalone control command is available for development:
 

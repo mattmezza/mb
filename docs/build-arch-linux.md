@@ -121,7 +121,7 @@ evidence still require inspection before the baseline gate can pass.
 
 The upstream baseline has now passed on the actual Arch/Xorg machine. Product
 GN integration and its C++/companion tests also pass; see the [product commands](product-integration.md).
-The renamed browser is compiling. Release output will use `src/out/mb-release`;
+The renamed debug browser built and passed its scoped Xorg launch. Release output will use `src/out/mb-release`;
 optimized build commands and Arch packaging remain pending.
 
 ## Product packaging requirements under preparation

@@ -172,6 +172,17 @@ def generated_payload():
             target = Path(directory) / (scale + '.png')
             branding_assets.rasterize(renderer, ROOT / 'mb/resources/password-manager.svg', size, size, target)
             payload['chrome/app/theme/' + scale + '/mb/favicon_password_manager.png'] = target.read_bytes()
+        # Version UI uses component resources separately from browser theme
+        # resources. All scale factors derive from the same manifest SVG.
+        for multiplier in (1, 2, 3):
+            scale = f'default_{100 * multiplier}_percent'
+            for name, size in (('product_logo.png', 32),
+                               ('product_logo_white.png', 32),
+                               ('favicon_product.png', 16)):
+                target = Path(directory) / (scale + '-' + name)
+                branding_assets.rasterize(renderer, BUILD / 'generated/branding/icon.svg',
+                                         size * multiplier, size * multiplier, target)
+                payload['components/resources/' + scale + '/mb/' + name] = target.read_bytes()
     payload['chrome/app/theme/mb/BRANDING'] = (BUILD / 'generated/branding/BRANDING').read_bytes()
     payload['chrome/app/theme/default_100_percent/mb/linux/product_logo_32.png'] = (assets / 'default_100_percent/product_logo_32.png').read_bytes()
     return payload

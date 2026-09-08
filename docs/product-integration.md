@@ -1,9 +1,11 @@
 # Product integration
 
 Phase 1 passed on 2026-09-08; the [baseline review](upstream-baseline-2026-09-08.md)
-records its scope and limitations. The integration below has passed GN generation;
-all 51 product C++ tests and 17 companion checks passed in the Chromium build.
-The renamed browser is compiling and has not yet passed runtime checks.
+records its scope. Product generation, browser compilation, all 51 C++ tests and
+17 companion checks passed. The renamed browser also passed its
+[scoped Xorg launch](product-baseline-2026-09-08.md), including manifest identity,
+sandbox and clean exit. The initial timeout and subsequent version-page artwork
+correction are retained in that review.
 
 Run from the repository root after completing the pinned upstream baseline:
 
@@ -13,6 +15,10 @@ python3 mb/tools/product.py gen
 python3 mb/tools/product.py test --jobs 12
 python3 mb/tools/product.py build --jobs 12
 ```
+
+The final branding build receipt is
+`.build/logs/product-build-20260908T190956.375119Z.json`; reviewed product evidence
+is `.build/test-evidence/product-20260908T191032.883440Z/review.json`.
 
 Replace the review path with the actual passed review on a new machine. The first
 preparation checks the review text and screenshot hashes, successful test/build
@@ -49,7 +55,8 @@ A successful browser build records the renamed ELF hash. Product GN arguments
 are checked in; switching from the exact baseline arguments is allowed once.
 Unexpected local GN arguments are preserved and rejected.
 
-The initial patch changes twelve upstream browser/build/resource files:
+The initial patch changes twelve upstream browser/build/resource files; a second
+patch redirects three component version-page artwork resources to generated assets:
 
 - `chrome/BUILD.gn`: Linux executable output name, preserving the `chrome` GN label.
 - `chrome/app/BUILD.gn`, `components/strings/BUILD.gn`: generated native strings and aliases to Chromium’s resolved resource-ID allocation.

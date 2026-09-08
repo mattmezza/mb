@@ -32,11 +32,16 @@ Exit evidence: successful upstream compilation, functional Xorg browser window, 
 
 ## Phase 2: product skeleton and identity
 
+Status: passed the branded debug launch on 2026-09-08; see [product review](product-baseline-2026-09-08.md).
+
 Create the `//mb/{app,browser,common,config,ui,resources,test,tools}` product layer. Introduce one authoritative TOML branding manifest and derive build identity, executable name, headers, strings, desktop metadata, packaging values, and an original temporary icon. Document every necessary upstream patch and preserve Chromium licenses, credits, and third-party notices.
 
 Exit evidence: branding generator tests pass, the renamed browser builds and launches, and a manifest-only name change regenerates the intended derived identity without manual code edits.
 
 ## Phase 3: native vertical tabs
+
+Status: active. First integrate a bundled local-only NTP and focused browser tests,
+then native sidebar composition. Each increment must build and pass runtime review.
 
 Introduce narrow browser/window/tab/command abstractions backed by `Browser`, `TabStripModel`, `Profile`, and `WebContents`. Retain the working omnibox and navigation controls. Replace the visible horizontal strip with a Views sidebar in small compiled increments: tab display and operations; selection and status; pinned tabs/groups/context menus; drag reordering; scrolling and keyboard accessibility; collapse/resize persistence.
 
@@ -70,7 +75,8 @@ Exit evidence: tested release build and Arch package; reproducible instructions;
 
 ## Acceptance tracking
 
-All acceptance evidence is currently pending.
+Phases 1–2 have scoped build, branding and launch evidence. The final release
+acceptance matrix remains open until all integration and package checks pass.
 
 | User criteria | Evidence owner |
 | --- | --- |
