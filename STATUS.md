@@ -20,7 +20,7 @@ User authorized unrestricted computer use and requested minimal token spending.
 
 ## Pending work
 
-1. Compile and test prepared restart-only UI config patch0010, then startup URLs/close-button patch0011.
+1. Finish production build for tested UI config0010, then integrate startup URLs/close-button patch0011.
 2. Integrate prepared XDG config/bootstrap/remembered-selection core, preserving the
    stateless early URL validator now in root (never copy an older GURL-based gate).
 3. Cookie/history/extension isolation and OTR persistence tests; prepared MV3/OTR tests remain uncompiled.
@@ -42,7 +42,7 @@ User authorized unrestricted computer use and requested minimal token spending.
 
 ## Exact next commands
 
-After copying/reviewing only patch0010 and its GN additions:
+Patch0010 and its GN additions are now in root; compilation pending:
 
 ```sh
 export TMPDIR=/home/matteo/dev/mb/.build/tmp
@@ -56,3 +56,7 @@ successful matching receipt. Prepared sources: `.build/tmp/runtime-ui-config-rw9
 Other prepared work: `.build/tmp/runtime-ui-actions-3xnclkkd`,
 `.build/tmp/default-config-state-20260909T110623`, `.build/tmp/arch-payload-20260909`.
 Build/test failures and prior evidence are retained; see docs/testing.md.
+
+UI config0010: build114007.422487Z and four browser tests114210.015824Z passed.
+Production build114329.749888Z passed. Native width/collapse/theme and synchronous multiwindow
+restoration are covered; asynchronous extra-profile restores remain limited.

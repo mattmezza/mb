@@ -72,6 +72,13 @@ source_set("product_core") {
 }
 
 if (is_linux) {
+  component("runtime_ui_config") {
+    sources = [ "browser/runtime_ui_config.cc", "browser/runtime_ui_config.h" ]
+    public = [ "browser/runtime_ui_config.h" ]
+    defines = [ "IS_MB_RUNTIME_UI_CONFIG_IMPL=1" ]
+    public_deps = [ ":product_core", "//base" ]
+    deps = [ "//chrome/common", "//components/prefs" ]
+  }
   component("browser_config_gate") {
     sources = [
       "browser/browser_config_gate.cc",
@@ -211,8 +218,8 @@ test("mb_browser_tests") {
     "//url",
   ]
   if (is_linux) {
-    sources += [ "test/environment_root_fallback_probe_browsertest.cc", "test/browser_tests_main.cc" ]
-    deps += [ ":browser_config_gate", "//chrome/test/base:chrome_test_launcher" ]
+    sources += [ "test/environment_root_fallback_probe_browsertest.cc", "test/browser_tests_main.cc", "test/runtime_ui_config_browsertest.cc" ]
+    deps += [ ":browser_config_gate", "//chrome/test/base:chrome_test_launcher", "//chrome/browser/prefs:util", "//chrome/browser/themes", "//chrome/browser/ui/browser_window" ]
   }
   data = [ "//chrome/test/data/media/pink_noise_140ms.wav" ]
   data_deps = [ "//chrome:packed_resources" ]

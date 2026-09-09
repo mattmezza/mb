@@ -1,0 +1,182 @@
+diff --git a/chrome/browser/chrome_browser_main.cc b/chrome/browser/chrome_browser_main.cc
+--- a/chrome/browser/chrome_browser_main.cc
++++ b/chrome/browser/chrome_browser_main.cc
+@@ -31,6 +31,13 @@
+ #include "base/values.h"
+ #include "build/branding_buildflags.h"
+ #include "build/build_config.h"
++
++#if BUILDFLAG(IS_LINUX)
++#include "mb/browser/browser_config_gate.h"
++#include "mb/browser/runtime_ui_config.h"
++#include "chrome/browser/themes/theme_service.h"
++#include "chrome/browser/themes/theme_service_factory.h"
++#endif
+ #include "chrome/browser/active_use_util.h"
+ #include "chrome/browser/after_startup_task_utils.h"
+ #include "chrome/browser/browser_features.h"
+@@ -1580,6 +1587,22 @@
+ 
+ void ChromeBrowserMainParts::PostProfileInit(Profile* profile,
+                                              bool is_initial_profile) {
++#if BUILDFLAG(IS_LINUX)
++  if (const auto* snapshot = mb::GetProcessRuntimeConfig();
++      snapshot && profile->IsRegularProfile()) {
++    if (auto theme = mb::InitializeRuntimeUiConfig(
++            profile, profile->GetPrefs(), snapshot->config.ui)) {
++      auto scheme = ThemeService::BrowserColorScheme::kSystem;
++      switch (*theme) {
++        case mb::config::Theme::kSystem: break;
++        case mb::config::Theme::kLight: scheme = ThemeService::BrowserColorScheme::kLight; break;
++        case mb::config::Theme::kDark: scheme = ThemeService::BrowserColorScheme::kDark; break;
++      }
++      ThemeServiceFactory::GetForProfile(profile)->SetBrowserColorScheme(scheme);
++      mb::RecordRuntimeThemeApplied(profile);
++    }
++  }
++#endif
+   if (is_initial_profile) {
+     TRACE_EVENT0("startup", "ChromeBrowserMainParts::PostProfileInit");
+   }
+diff --git a/chrome/browser/BUILD.gn b/chrome/browser/BUILD.gn
+--- a/chrome/browser/BUILD.gn
++++ b/chrome/browser/BUILD.gn
+@@ -1962,6 +1962,9 @@
+ 
+   if (safe_browsing_mode == 1) {
+     deps += [ "//chrome/browser/ui/webui/reset_password" ]
++  }
++  if (is_linux) {
++    deps += [ "//mb:browser_config_gate", "//mb:runtime_ui_config" ]
+   }
+ }
+ 
+diff --git a/chrome/browser/prefs/browser_prefs.cc b/chrome/browser/prefs/browser_prefs.cc
+--- a/chrome/browser/prefs/browser_prefs.cc
++++ b/chrome/browser/prefs/browser_prefs.cc
+@@ -18,6 +18,10 @@
+ #include "build/android_buildflags.h"
+ #include "build/branding_buildflags.h"
+ #include "build/build_config.h"
++
++#if BUILDFLAG(IS_LINUX)
++#include "mb/browser/runtime_ui_config.h"
++#endif
+ #include "chrome/browser/about_flags.h"
+ #include "chrome/browser/accessibility/accessibility_labels_service.h"
+ #include "chrome/browser/accessibility/invert_bubble_prefs.h"
+@@ -1737,6 +1741,9 @@
+ void RegisterProfilePrefs(user_prefs::PrefRegistrySyncable* registry,
+                           const std::string& locale) {
+   TRACE_EVENT0("browser", "chrome::RegisterProfilePrefs");
++#if BUILDFLAG(IS_LINUX)
++  mb::RegisterRuntimeUiConfigPrefs(registry);
++#endif
+   // User prefs. Please keep this list alphabetized.
+   AccessibilityLabelsService::RegisterProfilePrefs(registry);
+   AccessibilityUIMessageHandler::RegisterProfilePrefs(registry);
+diff --git a/chrome/browser/prefs/BUILD.gn b/chrome/browser/prefs/BUILD.gn
+--- a/chrome/browser/prefs/BUILD.gn
++++ b/chrome/browser/prefs/BUILD.gn
+@@ -487,6 +487,9 @@
+   if (!is_android) {
+     deps += [ "//chrome/browser/ui:browser_view_prefs" ]
+   }
++  if (is_linux) {
++    deps += [ "//mb:runtime_ui_config" ]
++  }
+ }
+ 
+ # There are users of this util such as //c/b/ash/app_restore. If it's part of
+diff --git a/chrome/browser/ui/browser_window/internal/browser_window_features.cc b/chrome/browser/ui/browser_window/internal/browser_window_features.cc
+--- a/chrome/browser/ui/browser_window/internal/browser_window_features.cc
++++ b/chrome/browser/ui/browser_window/internal/browser_window_features.cc
+@@ -3,6 +3,11 @@
+ // found in the LICENSE file.
+ 
+ #include "chrome/browser/ui/browser_window/public/browser_window_features.h"
++#include "build/build_config.h"
++
++#if BUILDFLAG(IS_LINUX)
++#include "mb/browser/runtime_ui_config.h"
++#endif
+ 
+ #include <memory>
+ 
+@@ -601,6 +606,13 @@
+             prefs::kVerticalTabsUncollapsedWidth);
+       }
+ 
++#if BUILDFLAG(IS_LINUX)
++      if (browser->GetType() == BrowserWindowInterface::TYPE_NORMAL) {
++        mb::OverrideInitialSidebarConfig(profile, browser->CreatedBySessionRestore(),
++                                         restored_state_collapsed,
++                                         restored_state_uncollapsed_width);
++      }
++#endif
+       vertical_tab_strip_state_controller_ =
+           GetUserDataFactory()
+               .CreateInstance<tabs::VerticalTabStripStateController>(
+@@ -609,6 +621,11 @@
+                   SessionServiceFactory::GetForProfile(browser_->GetProfile()),
+                   browser_->GetSessionID(), restored_state_collapsed,
+                   restored_state_uncollapsed_width);
++#if BUILDFLAG(IS_LINUX)
++      if (browser->GetType() == BrowserWindowInterface::TYPE_NORMAL) {
++        mb::DidInitializeSidebarConfig(profile);
++      }
++#endif
+     }
+   }
+ 
+diff --git a/chrome/browser/ui/browser_window/internal/BUILD.gn b/chrome/browser/ui/browser_window/internal/BUILD.gn
+--- a/chrome/browser/ui/browser_window/internal/BUILD.gn
++++ b/chrome/browser/ui/browser_window/internal/BUILD.gn
+@@ -192,6 +192,9 @@
+       "//chrome/browser/ui:browser_select_file_dialog_controller",
+     ]
+   }
++  if (is_linux) {
++    deps += [ "//mb:runtime_ui_config" ]
++  }
+ }
+ 
+ source_set("unit_tests") {
+diff --git a/chrome/browser/ui/startup/startup_browser_creator_impl.cc b/chrome/browser/ui/startup/startup_browser_creator_impl.cc
+--- a/chrome/browser/ui/startup/startup_browser_creator_impl.cc
++++ b/chrome/browser/ui/startup/startup_browser_creator_impl.cc
+@@ -19,6 +19,10 @@
+ #include "base/supports_user_data.h"
+ #include "base/version.h"
+ #include "build/build_config.h"
++
++#if BUILDFLAG(IS_LINUX)
++#include "mb/browser/runtime_ui_config.h"
++#endif
+ #include "chrome/browser/apps/platform_apps/install_chrome_app.h"
+ #include "chrome/browser/browser_process.h"
+ #include "chrome/browser/custom_handlers/protocol_handler_registry_factory.h"
+@@ -743,6 +747,10 @@
+       restore_options |= SessionRestore::RESTORE_APPS;
+     }
+ 
++#if BUILDFLAG(IS_LINUX)
++    mb::ScopedInitialUiConfigRestore config_restore(
++        profile_, process_startup == chrome::startup::IsProcessStartup::kYes);
++#endif
+     browser = SessionRestore::RestoreSession(profile_, nullptr, restore_options,
+                                              tabs);
+     if (browser) {
+diff --git a/chrome/browser/ui/startup/BUILD.gn b/chrome/browser/ui/startup/BUILD.gn
+--- a/chrome/browser/ui/startup/BUILD.gn
++++ b/chrome/browser/ui/startup/BUILD.gn
+@@ -367,6 +367,9 @@
+ 
+   if (!is_android) {
+     deps += [ "//chrome/browser/ui:browser_tab_strip_tracker" ]
++  }
++  if (is_linux) {
++    deps += [ "//mb:runtime_ui_config" ]
+   }
+ }
+ 

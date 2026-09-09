@@ -593,3 +593,6 @@ caught the GURL startup bug; `l7vz8q38` exposed a process-title test assumption;
 `txtino73`, `9vku2wg9`, `t82iathl` exposed window-manager activation/close limitations.
 Final lifecycle verification used native POSIX session shutdown, not simulated
 keyboard success. Browser desktop smoke `112221.326481Z` remains failed on focus.
+
+UI config0010: four PRE_/restart browser cases passed in
+`product-browser-tests-20260909T114210.015824Z`, test build114007.422487Z.

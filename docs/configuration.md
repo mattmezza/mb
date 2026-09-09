@@ -134,3 +134,8 @@ The companion validation/list/path commands remain usable. Startup validates
 URLs in every environment before creating the selected root; a supplied native
 `--user-data-dir=PATH` must match that root. UI settings and configured startup
 URL opening are the next compiled milestone.
+
+Restart-only sidebar width/collapse and theme application now passes native
+browser tests, including unchanged-config preservation of user adjustments and
+changed-config application to multiple synchronously restored windows. Additional
+profiles restored asynchronously are not yet covered by this override policy.
