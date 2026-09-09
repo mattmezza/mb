@@ -7,36 +7,31 @@ Updated: 2026-09-09 (Europe/Zurich; evidence timestamps use UTC).
 - Last successful production build:
   `.build/logs/product-build-20260908T221802.370989Z.json`.
 - Last successful focused test build:
-  `.build/logs/product-test-build-20260908T221422.316201Z.json`.
-- Last focused run: cleanup/navigation and expanded scale trace, 3/3 passed at
-  `product-browser-tests-20260908T221539.543092Z`.
+  `.build/logs/product-test-build-20260909T093417.670586Z.json`.
+- Last focused browser run: NTP/sidebar regression, 9/9 passed at
+  `product-browser-tests-20260909T072551.791965Z`. Cleanup/scale trace previously
+  passed 3/3 at `product-browser-tests-20260908T221539.543092Z`.
 - AX/Return focus passed at `215551.366276Z`; loading/crash/audio passed at
   `215044.420082Z`. Bulk navigation after readiness passed all 100 local pages
   at `221016.242372Z`, with no observed network-service lifecycle events.
 - Product core: 51 native C++ tests and 17 companion checks passed at
-  `product-unit-20260908T184731.229729Z`. Latest focused tool suite: 18 passed
-  at `standalone-20260908T200445.214481Z`; earlier full standalone suite: 107.
+  `product-unit-20260908T184731.229729Z`. Latest focused tool suite: 37 passed
+  at `standalone-20260909T073714.792255Z`; earlier full standalone suite: 107.
 - Full product sandbox smoke last passed at `product-20260908T211150.370203Z`.
-  Current cleanup build is undergoing additional actual Xorg review below.
-- Resources: about 78 GiB disk free, 17 GiB available RAM and 24 GiB unused swap
-  after the last bulk review. Below-100-GiB warning already reported. Recheck
+  Additional cleanup-build Xorg review is paused until the reserved lunch slot.
+- Last resource check (09:23 local): about 78 GiB disk free, 13 GiB available RAM
+  and 25 GiB unused swap. Below-100-GiB warning already reported. Recheck
   before a separate optimized output; release peak storage remains unmeasured.
 - External blockers: none currently. Dependencies verified; no sudo run.
-- Git: main, `git@github.com:mattmezza/mb.git`; last pushed `def5355`.
+- Git: main, `git@github.com:mattmezza/mb.git`; recorded pushed checkpoint `507ba91`.
   Unrelated root `test/` and `.tmux-session` remain untouched.
 
 ## Desktop availability
 
-The user is using this computer for morning meetings. Keep work lightweight:
-no browser launches, desktop input, or heavy builds before 11:35 Europe/Zurich.
-The user explicitly reserved **2026-09-09 11:35–14:00 Europe/Zurich**
-(09:35–12:00 UTC) for our unrestricted builds and desktop testing. Use that
-window for the initial-startup diagnostic, incremental configuration checks,
-and pending Xorg/private-window review. Stop interactive testing and close
-owned test windows before 14:00. A full release build needs a separate longer
-slot; do not start it on the assumption it will finish within lunch.
+The user returned at 11:31 local and explicitly authorized unrestricted computer use, superseding the earlier lunch-window restriction. Builds and desktop tests may resume now.
 
-No browser or build is currently running. The 181-file staged checkout predates
+No agent-owned browser or build is running. A user trial may be running; the
+preflight must check before any mutation. The 181-file staged checkout predates
 new root tooling changes; run prepare again before future generation.
 
 ## Current work and exact continuation
@@ -76,7 +71,13 @@ It registers native network lifecycle observation after threads are created,
 before Mojo/profile startup, preserving early-exit observer cleanup.
 Release performance remains untested.
 
-Queued build for the next available desktop/build window (not running):
+Startup diagnostic compiled after correcting a checked-pointer field. Build
+`093306.585602Z` failed; `093417.670586Z` passed. The bounded initial-100-tab
+test passed in `product-browser-tests-20260909T093527.729468Z`: all 100
+initial URLs loaded in 77.9 seconds; one network launch, no exits/restarts.
+This is a harness pass, not resolution of production startup or release latency.
+
+Reproduction:
 
 ```sh
 python3 mb/tools/product.py prepare
@@ -92,7 +93,7 @@ process activation/locking and cookie/history/extension isolation. Preserve
 original argc/argv backing and Chromium's genuine off-the-record profiles.
 Prepared drafts: `.build/tmp/startup-argv-6ghiymnt`,
 `.build/tmp/browser-config-gate-814cb32j`, and
-`.build/tmp/config-gate-runner-w4oioC` (four pure harness tests passed).
+`.build/tmp/config-gate-runner-w4oioC` (five pure harness tests passed).
 
 Broader MV3/incognito/DevTools panels and ordinary capabilities, optimized build,
 Arch packaging/installation and upstream-update rehearsal remain open.
@@ -128,10 +129,16 @@ Scratch review locations:
 - Explicit gate: `.build/tmp/browser-config-gate-814cb32j` (0008, eight cases,
   not compiled).
 - Fallback: `.build/tmp/native-root-fail-closed-seoz1fc8` (0009, before native
-  default-directory resolution; deterministic test under preparation).
+  default-directory resolution; disabled native probe and receipt-bound runner
+  prepared, seven pure runner tests passed; native probe not compiled).
 - Expected-error runner: `.build/tmp/config-gate-runner-w4oioC` (five pure tests
   passed, including release receipt support; real executable checks pending).
 - Release payload source inventory: `.build/tmp/release-payload-inventory-20260909`.
 
 Hands-on user instructions are in `docs/experimental-testing.md`. No browser or
 heavy compilation is being launched during the morning meeting period.
+
+Additional reviewed capability drafts: MV3 content/service-worker/storage/action
+checks and OTR lifecycle/history/cookie checks remain scratch-only and uncompiled.
+Root formatted both with the pinned depot_tools wrapper. UI configuration seam
+notes are in `.build/tmp/ui-config-seams-20260909.md`; no UI-config patch exists.

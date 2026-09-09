@@ -573,3 +573,10 @@ directories, helpers, deleted executables, symlink aliases, other users, vanishe
 and unreadable entries, a missing process filesystem, and refusal before any
 staging/verification work. The guard is a read-only preflight and cannot prevent
 a user launching a new browser after it finishes.
+
+Initial 100-URL startup diagnostic passed on 2026-09-09 in
+`product-browser-tests-20260909T093527.729468Z` (build `093417.670586Z`).
+All pages loaded in 77.9 seconds; native network observation recorded one launch
+and no exits. The harness differs from production startup, and debug activation
+latency remains open. Initial compile `093306.585602Z` required replacing the
+observer-owner field with Chromium `raw_ptr`.
