@@ -42,6 +42,16 @@ def binary_record(receipt):
     return Path(path), digest
 
 
+def test_binary_from_receipt(receipt):
+    """Resolve the focused test binary through the receipt's closed profile."""
+    profile = product.profile_from_build_receipt(receipt)
+    recorded_binary, digest = binary_record(receipt)
+    binary = profile["output"] / "mb_browser_tests"
+    if recorded_binary.resolve() != binary.resolve():
+        raise RuntimeError("test-build receipt binary path is not the product mb_browser_tests output")
+    return profile, binary, digest
+
+
 def validate_receipt(path):
     receipt = json.loads(path.read_text())
     if receipt.get("stage") != "test-build" or receipt.get("exit_code") != 0:
@@ -54,16 +64,13 @@ def validate_receipt(path):
         raise RuntimeError("test-build receipt integration hash differs from product receipt")
     if receipt.get("integration") != verified:
         raise RuntimeError("test-build receipt integration does not match product.verify()")
-    recorded_binary, expected_sha = binary_record(receipt)
-    binary = product.OUTPUT / "mb_browser_tests"
-    if recorded_binary.resolve() != binary.resolve():
-        raise RuntimeError("test-build receipt binary path is not the product mb_browser_tests output")
+    profile, binary, expected_sha = test_binary_from_receipt(receipt)
     if not binary.is_file() or not os.access(binary, os.X_OK):
         raise RuntimeError(f"Test binary is missing or not executable: {binary}")
-    args_path = product.OUTPUT / "args.gn"
-    expected_args = (ROOT / "mb/tools/gn/product-debug.gn").read_text()
-    if receipt.get("args_gn") != expected_args or not args_path.is_file() or args_path.read_text() != expected_args:
-        raise RuntimeError("Product output GN arguments differ from product-debug.gn")
+    expected_args = profile["args_file"].read_text()
+    args_path = profile["output"] / "args.gn"
+    if not args_path.is_file() or args_path.read_text() != expected_args:
+        raise RuntimeError("Product output GN arguments differ from the receipt profile")
     if file_sha(binary) != expected_sha:
         raise RuntimeError("mb_browser_tests executable hash differs from test-build receipt")
     return receipt, binary, expected_sha

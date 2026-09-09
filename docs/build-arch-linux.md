@@ -130,8 +130,45 @@ evidence still require inspection before the baseline gate can pass.
 
 The upstream baseline has now passed on the actual Arch/Xorg machine. Product
 GN integration and its C++/companion tests also pass; see the [product commands](product-integration.md).
-The renamed debug browser built and passed its scoped Xorg launch. Release output will use `src/out/mb-release`;
-optimized build commands and Arch packaging remain pending.
+The renamed debug browser built and passed its scoped Xorg launch.
+
+## Product debug and release profiles
+
+The product tool provides two fixed profiles. Debug uses `out/mb-debug`;
+release uses `out/mb-release`. Their checked-in GN arguments are separate.
+The release profile is optimized, non-component, and omits debug symbols. It
+preserves Chromium security defaults and generates real credits.
+
+After staging the product, generate and build the selected profile explicitly:
+
+```sh
+python3 mb/tools/product.py prepare
+python3 mb/tools/product.py gen --profile release
+python3 mb/tools/product.py build --profile release --jobs 4
+python3 mb/tools/product.py test --profile release --jobs 4
+python3 mb/tools/product.py test-build --profile release --jobs 4 --targets mb:mb_browser_tests
+```
+
+These are implemented commands, not a record of a successful release build.
+The optimized output has not yet been generated, compiled, or launched. Check
+free space and RAM before starting; the separate output's peak storage is not
+measured. Schedule the full compilation when the target computer is available.
+The tool's 25 GiB entry reserve is not continuous storage monitoring.
+
+Before staging, generation or compilation, the product tool scans same-user
+`/proc/<pid>/exe` links for processes using either output. It refuses to mutate
+the build while a matching browser/test/helper remains alive and reports its
+PID. It does not inspect command lines, terminate processes, or control other
+applications. This is a preflight check, not a lock preventing someone from
+launching the browser later: keep experimental windows closed throughout builds.
+
+Build receipts identify the exact profile, output directory, GN text/hash and
+binary hash. The focused browser runner and product smoke tool resolve their
+binary from that profile and reject mixed debug/release receipts. Older debug
+receipts remain supported only with the exact established debug arguments.
+Run smoke and browser tests with the successful matching receipts as described
+in [product integration](product-integration.md). Omitting `--profile` retains
+the debug default. Arch packaging remains pending.
 
 ## Product packaging requirements under preparation
 

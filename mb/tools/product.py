@@ -28,6 +28,123 @@ RECEIPT = BUILD / 'product-integration.json'
 OUTPUT = SOURCE / 'out/mb-debug'
 
 
+def product_profile(name):
+    """Return one fixed product build profile; callers cannot supply paths."""
+    profiles = {
+        'debug': {
+            'name': 'debug',
+            'output': SOURCE / 'out/mb-debug',
+            'output_directory': 'out/mb-debug',
+            'args_file': ROOT / 'mb/tools/gn/product-debug.gn',
+            # The staged baseline can be converted only in the debug output.
+            'legacy_args_file': ROOT / 'mb/tools/gn/upstream-debug.gn',
+        },
+        'release': {
+            'name': 'release',
+            'output': SOURCE / 'out/mb-release',
+            'output_directory': 'out/mb-release',
+            'args_file': ROOT / 'mb/tools/gn/product-release.gn',
+        },
+    }
+    if not isinstance(name, str) or name not in profiles:
+        raise RuntimeError(f'Unknown product build profile: {name!r}')
+    return profiles[name]
+
+
+def profile_from_build_receipt(receipt):
+    """Validate and return the closed profile named by a build receipt.
+
+    Receipts created before profiles existed remain valid debug receipts if their
+    exact recorded arguments are the established product-debug arguments.
+    """
+    if not isinstance(receipt, dict):
+        raise RuntimeError('Product build receipt is not an object')
+    profile_fields = {'profile', 'output_directory', 'args_gn_sha256'}
+    present_fields = profile_fields & set(receipt)
+    if present_fields and 'profile' not in present_fields:
+        raise RuntimeError('Build receipt has partial profile metadata without a profile')
+    modern = 'profile' in present_fields
+    profile = product_profile(receipt.get('profile', 'debug'))
+    expected_args = profile['args_file'].read_text()
+    if receipt.get('args_gn') != expected_args:
+        raise RuntimeError('Build receipt does not match the product profile arguments')
+    expected_sha = sha(expected_args.encode())
+    if modern and receipt.get('output_directory') != profile['output_directory']:
+        raise RuntimeError('Build receipt output directory does not match the product profile')
+    if modern and receipt.get('args_gn_sha256') != expected_sha:
+        raise RuntimeError('Build receipt arguments hash does not match the product profile')
+    return profile
+
+
+def expected_product_binary(receipt, executable_name):
+    if not isinstance(executable_name, str) or not executable_name:
+        raise RuntimeError('Product manifest executable name is invalid')
+    profile = profile_from_build_receipt(receipt)
+    binary = profile['output'] / executable_name
+    if receipt.get('binary') != str(binary):
+        raise RuntimeError('Build receipt binary does not match the product profile output')
+    return profile, binary
+
+
+def product_output_directories():
+    return tuple(
+        product_profile(name)['output'].resolve(strict=False)
+        for name in ('debug', 'release')
+    )
+
+
+def _is_output_executable(path, output_directories):
+    if not path.is_absolute():
+        return False
+    candidates = [path]
+    try:
+        candidates.append(path.resolve(strict=False))
+    except (OSError, RuntimeError):
+        pass
+    return any(candidate == directory or directory in candidate.parents
+               for candidate in candidates for directory in output_directories)
+
+
+def live_product_output_processes(proc_root=Path('/proc'), *, uid=None,
+                                  output_directories=None):
+    """Return same-user PIDs executing files below a product output directory."""
+    if uid is None:
+        uid = os.getuid()
+    if output_directories is None:
+        output_directories = product_output_directories()
+    try:
+        entries = list(proc_root.iterdir())
+    except OSError as error:
+        raise RuntimeError('Cannot inspect live product processes before mutation') from error
+    processes = []
+    for entry in entries:
+        if not entry.name.isdecimal():
+            continue
+        try:
+            if entry.stat().st_uid != uid:
+                continue
+            executable = os.readlink(entry / 'exe')
+        except (FileNotFoundError, PermissionError, ProcessLookupError):
+            continue
+        # Linux appends this suffix when an executable has been unlinked. Its
+        # former pathname still identifies an output that must not be rebuilt.
+        if executable.endswith(' (deleted)'):
+            executable = executable[:-len(' (deleted)')]
+        if _is_output_executable(Path(executable), output_directories):
+            processes.append((int(entry.name), executable))
+    return sorted(processes)
+
+
+def require_no_live_product_output_processes(stage):
+    processes = live_product_output_processes()
+    if not processes:
+        return
+    pids = ', '.join(str(pid) for pid, _ in processes)
+    raise RuntimeError(
+        f'Refusing {stage}: same-user process(es) still execute a product '
+        f'output (PID(s): {pids}). Close them before staging or building.')
+
+
 def sha(data):
     return hashlib.sha256(data).hexdigest()
 
@@ -253,6 +370,7 @@ def verify_product_sources(receipt):
 
 
 def prepare(args):
+    require_no_live_product_output_processes('prepare')
     pins = check_identity()
     previous = json.loads(RECEIPT.read_text()) if RECEIPT.exists() else None
     if previous and previous.get('chromium_commit') != pins['chromium']['commit']:
@@ -316,26 +434,32 @@ def verify():
 
 
 def run_build_stage(args):
+    require_no_live_product_output_processes(args.stage)
     receipt = verify()
+    profile = product_profile(args.profile)
     scratch = BUILD / 'tmp'
     scratch.mkdir(exist_ok=True)
     if shutil.disk_usage(BUILD).free < 25 * 2**30:
         raise RuntimeError('Less than 25 GiB free working reserve')
-    expected = (ROOT / 'mb/tools/gn/product-debug.gn').read_text()
-    args_path = OUTPUT / 'args.gn'
+    expected = profile['args_file'].read_text()
+    args_path = profile['output'] / 'args.gn'
     if args.stage == 'gen':
-        current = args_path.read_text()
-        if current not in (expected, (ROOT / 'mb/tools/gn/upstream-debug.gn').read_text()):
+        current = args_path.read_text() if args_path.is_file() else None
+        allowed = {expected}
+        if 'legacy_args_file' in profile:
+            allowed.add(profile['legacy_args_file'].read_text())
+        if current is not None and current not in allowed:
             raise RuntimeError('Unrecognized existing GN arguments; preserving them')
         if current != expected:
+            profile['output'].mkdir(parents=True, exist_ok=True)
             # The successful baseline receipt already preserves exact old args.
             branding.atomic_write(args_path, expected)
-        command = [str(DEPOT / 'gn'), 'gen', 'out/mb-debug', '--fail-on-unused-args']
+        command = [str(DEPOT / 'gn'), 'gen', profile['output_directory'], '--fail-on-unused-args']
     else:
-        if args_path.read_text() != expected:
+        if not args_path.is_file() or args_path.read_text() != expected:
             raise RuntimeError('Run product.py gen with the product arguments first')
         targets = args.targets or (['mb:mb_unit_tests', 'mb:mb_control'] if args.stage == 'test-build' else ['chrome', 'chrome_sandbox'])
-        command = [str(DEPOT / 'autoninja'), '-C', 'out/mb-debug', '-j', str(args.jobs), *targets]
+        command = [str(DEPOT / 'autoninja'), '-C', profile['output_directory'], '-j', str(args.jobs), *targets]
     env = dict(os.environ, PATH=f"{DEPOT}:{DEPOT / 'python-bin'}:{os.environ.get('PATH', '')}",
                DEPOT_TOOLS_UPDATE='0', DEPOT_TOOLS_METRICS='0',
                PYTHONUNBUFFERED='1', TMPDIR=str(scratch))
@@ -347,16 +471,18 @@ def run_build_stage(args):
         stream.flush()
         outcome = subprocess.run(command, cwd=SOURCE, env=env, stdout=stream, stderr=subprocess.STDOUT)
     result = {'stage': args.stage, 'started': stamp, 'finished': datetime.now(timezone.utc).isoformat(),
-              'exit_code': outcome.returncode, 'command': command, 'args_gn': expected,
-              'integration_sha256': file_sha(RECEIPT), 'integration': receipt, 'log': str(log)}
-    binary = OUTPUT / receipt['product']['executable_name']
+              'exit_code': outcome.returncode, 'command': command, 'profile': profile['name'],
+              'output_directory': profile['output_directory'], 'args_gn': expected,
+              'args_gn_sha256': sha(expected.encode()), 'integration_sha256': file_sha(RECEIPT),
+              'integration': receipt, 'log': str(log)}
+    binary = profile['output'] / receipt['product']['executable_name']
     if args.stage == 'build' and outcome.returncode == 0:
         result.update(binary=str(binary), binary_sha256=file_sha(binary))
     if args.stage == 'test-build' and outcome.returncode == 0:
         test_outputs = {
-            'mb_unit_tests': OUTPUT / 'mb_unit_tests',
-            'mb_browser_tests': OUTPUT / 'mb_browser_tests',
-            'mb_control': OUTPUT / (receipt['product']['executable_name'] + 'ctl'),
+            'mb_unit_tests': profile['output'] / 'mb_unit_tests',
+            'mb_browser_tests': profile['output'] / 'mb_browser_tests',
+            'mb_control': profile['output'] / (receipt['product']['executable_name'] + 'ctl'),
         }
         result['test_binaries'] = {
             name: {'path': str(path), 'sha256': file_sha(path)}
@@ -370,7 +496,7 @@ def run_build_stage(args):
 
 
 
-def run_tests():
+def run_tests(profile):
     receipt = verify()
     stamp = datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S.%fZ')
     evidence = BUILD / 'test-evidence' / ('product-unit-' + stamp)
@@ -381,8 +507,8 @@ def run_tests():
     env = dict(os.environ, TMPDIR=str(scratch),
                MB_ENVIRONMENT_TEST_TMPDIR=str(scratch),
                MB_RUNTIME_CONFIG_TEST_TMPDIR=str(scratch))
-    binary = OUTPUT / 'mb_unit_tests'
-    companion = OUTPUT / (receipt['product']['executable_name'] + 'ctl')
+    binary = profile['output'] / 'mb_unit_tests'
+    companion = profile['output'] / (receipt['product']['executable_name'] + 'ctl')
     commands = [
         [str(binary), '--test-launcher-jobs=4',
          '--test-launcher-summary-output=' + str(evidence / 'summary.json')],
@@ -415,6 +541,7 @@ def main():
     parser.add_argument('stage', choices=('prepare', 'verify', 'gen', 'build', 'test-build', 'test'))
     parser.add_argument('--baseline-review', type=Path)
     parser.add_argument('--jobs', type=int, default=12)
+    parser.add_argument('--profile', choices=('debug', 'release'), default='debug')
     parser.add_argument('--targets', nargs='+')
     args = parser.parse_args()
     if args.jobs < 1:
@@ -429,7 +556,7 @@ def main():
             args.stage = 'test-build'
             args.targets = ['mb:mb_unit_tests', 'mb:mb_control']
             run_build_stage(args)
-            run_tests()
+            run_tests(product_profile(args.profile))
         else:
             run_build_stage(args)
         return 0

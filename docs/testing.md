@@ -553,3 +553,23 @@ The matching NTP/sidebar regression run at
 `product-test-build-20260908T221422.316201Z.json`. This covers the local NTP
 routing, extension override, genuine incognito NTP, blocked script execution,
 and sidebar projection/orientation/geometry persistence cases.
+
+Debug/release profile tooling was integrated on 2026-09-09. The direct profile,
+integration, browser-runner and smoke helper suite passed 27 tests. The recorded
+`standalone-20260909T073010.941754Z` integration-tools step passed 29 tests. Its
+subsequent upstream-tools step failed one existing deep-JSON rejection case
+under host Python 3.12; that parser boundary is being corrected explicitly.
+No release GN generation, build, or browser launch is implied by tooling tests.
+
+The JSON metadata fix adds explicit nesting and numeric-token bounds instead
+of relying on interpreter recursion behavior. Quoted brackets, escaped quotes
+and backslashes, exact limits, and rejected over-limit inputs are covered.
+`standalone-20260909T073416.970098Z` passed all 24 upstream-tool tests; the
+earlier failing receipt remains available. These tests make no network calls.
+
+The integrated profile/process guard suite passed 37 tests at
+`standalone-20260909T073714.792255Z`. Fake process-tree tests cover both output
+directories, helpers, deleted executables, symlink aliases, other users, vanished
+and unreadable entries, a missing process filesystem, and refusal before any
+staging/verification work. The guard is a read-only preflight and cannot prevent
+a user launching a new browser after it finishes.

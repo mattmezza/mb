@@ -46,3 +46,13 @@
 - Verify native sidebar accessibility/Return focus, loading transitions, renderer
   recovery and real local audio/mute state. Decompose 100-tab timing and verify
   a native visibility/presentation checkpoint; retain unresolved debug latency.
+
+- Omit inherited AI Mode/new-tab customization controls from the Linux product
+  UI and route local new-tab favicons through original generated branding.
+  Pass focused cleanup tests and nine NTP/sidebar regressions.
+- Add a trace of native activation and a bulk-navigation diagnostic; retain
+  the separate unresolved production startup/performance failure.
+- Add distinct debug/release build profiles and reject mixed output receipts;
+  optimized browser compilation and package validation remain pending.
+- Bound upstream metadata JSON nesting and numeric conversion explicitly across
+  Python versions, with quoted-string and exact-boundary regression tests.

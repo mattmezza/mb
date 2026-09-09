@@ -22,8 +22,22 @@ Updated: 2026-09-09 (Europe/Zurich; evidence timestamps use UTC).
   after the last bulk review. Below-100-GiB warning already reported. Recheck
   before a separate optimized output; release peak storage remains unmeasured.
 - External blockers: none currently. Dependencies verified; no sudo run.
-- Git: main, `git@github.com:mattmezza/mb.git`; last pushed `cf73541`.
+- Git: main, `git@github.com:mattmezza/mb.git`; cleanup commit `b9040fa`.
   Unrelated root `test/` and `.tmux-session` remain untouched.
+
+## Desktop availability
+
+The user is using this computer for morning meetings. Keep work lightweight:
+no browser launches, desktop input, or heavy builds before 11:35 Europe/Zurich.
+The user explicitly reserved **2026-09-09 11:35–14:00 Europe/Zurich**
+(09:35–12:00 UTC) for our unrestricted builds and desktop testing. Use that
+window for the initial-startup diagnostic, incremental configuration checks,
+and pending Xorg/private-window review. Stop interactive testing and close
+owned test windows before 14:00. A full release build needs a separate longer
+slot; do not start it on the assumption it will finish within lunch.
+
+No browser or build is currently running. The 181-file staged checkout predates
+new root tooling changes; run prepare again before future generation.
 
 ## Current work and exact continuation
 
@@ -56,8 +70,19 @@ worked, and normal shutdown exited 0. Evidence:
 
 The after-readiness diagnostic loaded all 100 local pages in 53 seconds without
 a service exit. This narrows startup conditions but does not resolve the failure.
-A test-only initial-startup variation is ready for review/compilation at
-`.build/tmp/bulk-startup-data-irxmi29j`. Release performance remains untested.
+The reviewed initial-startup variation is now in
+`mb/test/bulk_startup_data_browsertest.cc`, pending compilation and execution.
+It registers native network lifecycle observation after threads are created,
+before Mojo/profile startup, preserving early-exit observer cleanup.
+Release performance remains untested.
+
+Queued build for the next available desktop/build window (not running):
+
+```sh
+python3 mb/tools/product.py prepare
+python3 mb/tools/product.py gen
+python3 mb/tools/product.py test-build --targets mb:mb_browser_tests
+```
 
 ## Next phases
 
@@ -72,8 +97,12 @@ Prepared drafts: `.build/tmp/startup-argv-6ghiymnt`,
 Broader MV3/incognito/DevTools panels and ordinary capabilities, optimized build,
 Arch packaging/installation and upstream-update rehearsal remain open.
 Prepared capability drafts: `.build/tmp/extensions-capability-20260908T` and
-`.build/tmp/incognito-tests-voabnycf`. Closed debug/release tooling proposal:
-`.build/tmp/release-profiles-20260909T-a` (11 scratch pure tests passed).
+`.build/tmp/incognito-tests-voabnycf`. Debug/release tooling is integrated in root; 27 profile/integration/runner/smoke
+pure tests pass. Recorded integration-tools run 073010.941754Z passed 29;
+upstream-tools found one Python 3.12 deep-JSON rejection failure. Explicit
+parser bounds fixed it; 24 upstream-tool tests passed at 073416.970098Z.
+Profile/process guard suite passed 37 tests at 073714.792255Z.
+No release generation or compilation has run.
 These drafts are not accepted browser implementations until reviewed and tested.
 
 See docs/testing.md and the dated upstream/branding/sidebar reviews for exact

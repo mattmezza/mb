@@ -1,17 +1,20 @@
 # Known limitations
 
-Updated 2026-09-08. Phase 1 passed: unmodified Chromium built and launched
+Updated 2026-09-09. Phase 1 passed: unmodified Chromium built and launched
 under actual Xorg with reviewed navigation, tabs, docked DevTools, sandbox and
 clean exit. A product debug build and its focused GN tests also passed. The
 first product smoke had a post-DevTools navigation timeout; two retries passed.
 The [reviewed product launch](product-baseline-2026-09-08.md) verifies its limited
 scope. This repository does not yet provide the requested daily-driver browser.
-Custom UI, runtime isolation, extension compatibility, release build and Arch
-packaging remain pending. See the [baseline review](upstream-baseline-2026-09-08.md)
+The initial custom sidebar is running; its remaining performance/input checks,
+runtime environment isolation, full extension compatibility, release build and
+Arch packaging remain pending. See the [baseline review](upstream-baseline-2026-09-08.md)
 for the upstream data-URL debug assertion. F12 passed the first sidebar Xorg
 input check; see [sidebar review](sidebar-baseline-2026-09-08.md). Ctrl+T now
-passes the [local NTP gate](local-new-tab.md); the inherited omnibox AI Mode
-affordance and irrelevant Customize Chrome controls remain UI cleanup.
+passes the [local NTP gate](local-new-tab.md). Inherited omnibox AI Mode hints
+and unsupported new-tab customization controls are now omitted on Linux;
+focused cleanup/navigation and nine NTP/sidebar regression cases pass. Broader
+Google-dependent background service behavior remains inherited and unverified.
 
 The compiled configuration companion works independently. Its parser and
 environment-directory core have focused tests, but browser startup does not
@@ -52,3 +55,10 @@ Loading for minutes; individually reloaded first/last pages rendered. Cause is
 unresolved. Evidence: `sidebar-input-20260908T214054.271075Z/review.json`.
 The same run closed normally with exit 0. No network or sandbox changes were
 made to bypass it.
+
+The after-readiness bulk diagnostic loaded all 100 local pages without an
+observed network-service exit. It does not reproduce initial process startup;
+a separate initial-argument diagnostic is prepared but not yet compiled.
+Debug/release tooling is implemented and unit-tested, but no optimized build
+or installed Arch package has passed. Experimental use should keep a separate
+test user-data directory and close all windows before rebuilding shared output.

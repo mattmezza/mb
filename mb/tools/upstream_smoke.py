@@ -108,12 +108,7 @@ def main(*, product_build=False):
             if not isinstance(executable_name, str) or not executable_name or \
                     not isinstance(application_id, str) or not application_id:
                 raise RuntimeError("Verified integration product manifest is incomplete")
-            binary = product.OUTPUT / executable_name
-            if receipt.get("binary") != str(binary):
-                raise RuntimeError("Build receipt binary does not match the product manifest executable")
-            expected_args = (ROOT / "mb/tools/gn/product-debug.gn").read_text()
-            if receipt.get("args_gn") != expected_args:
-                raise RuntimeError("Build receipt does not match the product arguments")
+            _, binary = product.expected_product_binary(receipt, executable_name)
             if not os.access(binary, os.X_OK):
                 raise RuntimeError(f"Browser binary is missing: {binary}")
             with binary.open("rb") as stream:

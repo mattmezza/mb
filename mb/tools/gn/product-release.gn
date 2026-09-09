@@ -1,0 +1,16 @@
+# Optimized product release. Keep Chromium security and browser defaults.
+is_debug = false
+is_component_build = false
+symbol_level = 0
+blink_symbol_level = 0
+v8_symbol_level = 0
+use_siso = true
+use_remoteexec = false
+ozone_platform_x11 = true
+is_chrome_branded = false
+
+# Product identity derives from mb/branding.toml through product.py prepare.
+branding_path_product = "chromium"
+branding_path_component = "mb"
+branding_file_path = "//mb/generated/branding/BRANDING"
+generate_about_credits = true
