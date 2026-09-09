@@ -93,3 +93,14 @@ GN now derives aliases from Chromium's generated `default_resource_ids`; it does
 not ship the standalone seed-based pak allocation. The original allocation and
 repack collision checks remain active. Real credits generated successfully with
 toml++ included; packaging must preserve those notices.
+
+## Raw Linux selectors
+
+Patch `0007-startup-argv.patch` normalizes `--config` and `--environment`
+before constructing ChromeMainDelegate or initializing global CommandLine.
+The delegate destructor requires CommandLine even on early returns; an actual
+executable negative test caught that ordering requirement. ContentMainParams
+retains the original CRT argc/argv for Linux process-title setup. Environment
+extra flags are captured once and appended at the native post-snapshot point;
+they cannot inject product selectors, process type, or a user-data root.
+No configuration file or profile directory is opened by this adapter.

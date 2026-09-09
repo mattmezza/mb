@@ -142,3 +142,18 @@ Additional reviewed capability drafts: MV3 content/service-worker/storage/action
 checks and OTR lifecycle/history/cookie checks remain scratch-only and uncompiled.
 Root formatted both with the pinned depot_tools wrapper. UI configuration seam
 notes are in `.build/tmp/ui-config-seams-20260909.md`; no UI-config patch exists.
+
+Raw argv patch 0007 is integrated and pending compilation. Next: prepare, gen,
+`python3 mb/tools/product.py test-build --targets mb:mb_unit_tests`, then native
+unit checks and a production build before the explicit configuration gate.
+
+Raw argv unit tests passed (57 native + 17 companion, `093823.172494Z`).
+Production `093826.932314Z` compiled but a duplicate-selector executable check
+aborted during delegate destruction before CommandLine initialization. Patch
+0007 now validates before constructing the delegate; rebuild/retest pending.
+
+Corrected raw argv production build `110553.323382Z` passed. Four actual early
+error checks passed with exit13 and untouched private HOME/XDG roots at
+`raw-argv-j_uy32_o`. Production Xorg navigation passed; smoke `110701.350752Z`
+timed out on synthetic Ctrl+T and cleaned up its own process. Full input smoke
+is still pending (window-directed synthetic key delivery needs correction).

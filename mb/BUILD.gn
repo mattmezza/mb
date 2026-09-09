@@ -71,6 +71,18 @@ source_set("product_core") {
   configs += [ ":toml_no_exceptions" ]
 }
 
+if (is_linux) {
+  source_set("chrome_startup_arguments") {
+    sources = [
+      "app/chrome_startup_arguments.cc",
+      "app/chrome_startup_arguments.h",
+    ]
+    public = [ "app/chrome_startup_arguments.h" ]
+    public_deps = [ ":product_core" ]
+    deps = [ "//base" ]
+  }
+}
+
 source_set("control_main") {
   sources = [ "app/control_main.cc" ]
   configs += [ ":branding_config" ]
@@ -97,6 +109,11 @@ source_set("unit_tests") {
     ":product_core",
     "//testing/gtest",
   ]
+  if (is_linux) {
+    sources += [ "test/chrome_startup_arguments_test.cc" ]
+    deps += [ ":chrome_startup_arguments" ]
+  }
+
 }
 
 test("mb_unit_tests") {

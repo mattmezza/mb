@@ -86,7 +86,7 @@ product code must not replace either with ad hoc locks or history deletion.
 Source inspection identified these startup seams, still awaiting integration:
 
 - Normalize original arguments in `chrome/app/chrome_main.cc` before
-  its existing `CommandLine::Init()` call, using the string-vector overload.
+  delegate construction and first `CommandLine::Init()` call, using the string-vector overload.
   It copies the normalized strings. Keep `ContentMainParams.argc/argv` and their
   original bytes unchanged: Linux process-title initialization expects the real
   contiguous argv/environment memory, not heap-owned replacement strings.

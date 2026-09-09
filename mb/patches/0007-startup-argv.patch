@@ -1,0 +1,144 @@
+diff --git a/chrome/BUILD.gn b/chrome/BUILD.gn
+--- a/chrome/BUILD.gn
++++ b/chrome/BUILD.gn
+@@ -391,6 +391,7 @@
+     ]
+ 
+     if (is_linux) {
++      deps += [ "//mb:chrome_startup_arguments" ]
+       sources += [
+         "app/chrome_main_linux.cc",
+         "app/chrome_main_linux.h",
+diff --git a/chrome/app/chrome_main.cc b/chrome/app/chrome_main.cc
+--- a/chrome/app/chrome_main.cc
++++ b/chrome/app/chrome_main.cc
+@@ -41,6 +41,12 @@
+ 
+ #if BUILDFLAG(IS_LINUX)
+ #include "chrome/app/chrome_main_linux.h"
++
++#include <string>
++#include <vector>
++
++#include "base/compiler_specific.h"
++#include "mb/app/chrome_startup_arguments.h"
+ #endif
+ 
+ #if BUILDFLAG(IS_WIN)
+@@ -143,7 +149,35 @@
+ #endif
+ 
+ #if BUILDFLAG(IS_LINUX)
++  if (argc <= 0 || !argv || !argv[0]) {
++    std::cerr << "command line: missing executable name\n";
++    return CHROME_RESULT_CODE_UNSUPPORTED_PARAM;
++  }
+   PossiblyDetermineFallbackChromeChannel(argv[0]);
++  // Early errors must precede delegate construction and its shutdown metrics.
++  const auto extra_arguments = GetExtraArgumentsFromEnvironment();
++  std::vector<std::string> raw_arguments;
++  raw_arguments.reserve(static_cast<size_t>(argc));
++  for (int i = 0; i < argc; ++i) {
++    // SAFETY: ChromeMain receives the argc-sized argument array from main.
++    const char* argument = UNSAFE_BUFFERS(argv[i]);
++    if (!argument) {
++      std::cerr << "command line: null argument\n";
++      return CHROME_RESULT_CODE_UNSUPPORTED_PARAM;
++    }
++    raw_arguments.emplace_back(argument);
++  }
++  const auto normalized_arguments =
++      mb::NormalizeChromeStartupArguments(raw_arguments, extra_arguments);
++  if (!normalized_arguments.value) {
++    std::cerr << normalized_arguments.error << '\n';
++    return CHROME_RESULT_CODE_UNSUPPORTED_PARAM;
++  }
++  // Init copies the vector; no temporary argv pointer array escapes this call.
++  if (!base::CommandLine::Init(normalized_arguments.value->argv)) {
++    std::cerr << "command line: initialized before product normalization\n";
++    return CHROME_RESULT_CODE_UNSUPPORTED_PARAM;
++  }
+ #endif
+ 
+ #if BUILDFLAG(IS_WIN)
+@@ -188,9 +222,13 @@
+     base::debug::DumpWithoutCrashing();
+   }
+ #else
++  // ContentMain's Linux process-title setup requires the original contiguous
++  // CRT argv/environ backing. Never replace these pointers with owned strings.
+   params.argc = argc;
+   params.argv = argv;
++#if !BUILDFLAG(IS_LINUX)
+   base::CommandLine::Init(params.argc, params.argv);
++#endif
+ #endif  // BUILDFLAG(IS_WIN)
+   base::CommandLine::Init(0, nullptr);
+ 
+@@ -216,7 +254,9 @@
+ #endif
+ 
+ #if BUILDFLAG(IS_LINUX)
+-  AppendExtraArgumentsToCommandLine(command_line);
++  // Preserve upstream snapshot semantics: environment flags are appended
++  // afterward, from the exact token stream already checked before Init.
++  AppendExtraArgumentsToCommandLine(command_line, extra_arguments);
+ #endif
+ 
+   // PoissonAllocationSampler's TLS slots need to be set up before
+diff --git a/chrome/app/chrome_main_linux.cc b/chrome/app/chrome_main_linux.cc
+--- a/chrome/app/chrome_main_linux.cc
++++ b/chrome/app/chrome_main_linux.cc
+@@ -52,7 +52,7 @@
+ 
+ }  // namespace
+ 
+-void AppendExtraArgumentsToCommandLine(base::CommandLine* command_line) {
++std::vector<std::string> GetExtraArgumentsFromEnvironment() {
+   constexpr char kExtraFlagsVarName[] = "CHROME_EXTRA_FLAGS";
+   std::vector<std::string> extra_args = {""};
+ 
+@@ -63,6 +63,12 @@
+     AppendExtraArgsFromEnvVar(kExtraFlagsVarName + channel_suffix, extra_args);
+   }
+ 
++  return extra_args;
++}
++
++void AppendExtraArgumentsToCommandLine(
++    base::CommandLine* command_line,
++    const std::vector<std::string>& extra_args) {
+   command_line->AppendArguments(base::CommandLine(extra_args),
+                                 /*include_program=*/false);
+ }
+diff --git a/chrome/app/chrome_main_linux.h b/chrome/app/chrome_main_linux.h
+--- a/chrome/app/chrome_main_linux.h
++++ b/chrome/app/chrome_main_linux.h
+@@ -5,15 +5,22 @@
+ #ifndef CHROME_APP_CHROME_MAIN_LINUX_H_
+ #define CHROME_APP_CHROME_MAIN_LINUX_H_
+ 
++#include <string>
++#include <vector>
++
+ namespace base {
+ class CommandLine;
+ }
+ 
+-// Appends additional command line arguments and flags coming from
+-// CHROME_EXTRA_FLAGS and CHROME_EXTRA_FLAGS_{CHANNEL} environment variables, if
+-// set, whereas CHANNEL corresponds to the Chrome's release channel or
+-// Chromium's CHROME_VERSION_EXTRA environment variable.
+-void AppendExtraArgumentsToCommandLine(base::CommandLine* command_line);
++// Returns the once-tokenized CHROME_EXTRA_FLAGS and selected
++// CHROME_EXTRA_FLAGS_{CHANNEL} stream, with an empty program sentinel at [0].
++// CHANNEL follows Chrome's release channel or Chromium's CHROME_VERSION_EXTRA.
++std::vector<std::string> GetExtraArgumentsFromEnvironment();
++
++// Appends the previously captured stream with upstream CommandLine semantics.
++void AppendExtraArgumentsToCommandLine(
++    base::CommandLine* command_line,
++    const std::vector<std::string>& extra_args);
+ 
+ // For Chrome-branded builds, attempts to determine the correct channel to use
+ // when Chrome is launched outside of the "google-chrome" wrapper script.
