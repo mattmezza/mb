@@ -71,8 +71,13 @@ custom URL scheme is derived in Chromium but remains absent from desktop MIME
 registration until its invocation behavior is tested. The stock development
 wrapper and final packaging launcher still need explicit product handling.
 
-`product-debug.gn` enables real credits, unbranded resources and Ozone X11. A
-separate optimized release definition and tested Arch package remain pending.
+`product-debug.gn` enables real credits, unbranded resources and Ozone X11.
+The separate `product-release.gn` profile is now implemented; select it with
+`--profile release` for generation/build/test stages. Its optimized browser and
+Arch package are not yet built or tested. Profile-bound receipts and commands
+are described in [Arch build setup](build-arch-linux.md#product-debug-and-release-profiles).
+Staging and build stages refuse to proceed while identifiable same-user
+processes execute under either product output; close trial windows before builds.
 The renamed browser must pass its own scoped runtime checks; successful GN
 generation or standalone tests do not establish that milestone.
 

@@ -22,7 +22,7 @@ Updated: 2026-09-09 (Europe/Zurich; evidence timestamps use UTC).
   after the last bulk review. Below-100-GiB warning already reported. Recheck
   before a separate optimized output; release peak storage remains unmeasured.
 - External blockers: none currently. Dependencies verified; no sudo run.
-- Git: main, `git@github.com:mattmezza/mb.git`; cleanup commit `b9040fa`.
+- Git: main, `git@github.com:mattmezza/mb.git`; last pushed `def5355`.
   Unrelated root `test/` and `.tmux-session` remain untouched.
 
 ## Desktop availability
@@ -108,3 +108,30 @@ These drafts are not accepted browser implementations until reviewed and tested.
 See docs/testing.md and the dated upstream/branding/sidebar reviews for exact
 successes, failures and scope. Do not launch old `out/mb-debug/chrome`: its
 shared libraries and resources now carry product integration.
+
+## Prepared lunch sequence
+
+1. Check the 11:35–14:00 local availability window and current RAM/disk; run the
+   live-output guard. Preserve any user-owned trial process if still present.
+2. Prepare/generate/build the initial-startup diagnostic, then run only
+   `MbBulkStartupDataBrowserTest.*` with the matching new test receipt.
+3. Integrate raw argv 0007 as one small milestone; compile/run its six unit
+   cases and actual executable startup checks before proceeding.
+4. Integrate explicit config gate 0008 plus fail-closed native-root fallback
+   0009, then compile/run scoped unit and expected-error subprocess checks.
+5. Use the remaining window for actual Xorg/private-window review and valid
+   two-root native process launch/activation checks. Do not claim final
+   environment isolation without cookie/history/extension evidence.
+
+Scratch review locations:
+- Raw argv: `.build/tmp/startup-argv-6ghiymnt` (0007, six cases, not compiled).
+- Explicit gate: `.build/tmp/browser-config-gate-814cb32j` (0008, eight cases,
+  not compiled).
+- Fallback: `.build/tmp/native-root-fail-closed-seoz1fc8` (0009, before native
+  default-directory resolution; deterministic test under preparation).
+- Expected-error runner: `.build/tmp/config-gate-runner-w4oioC` (five pure tests
+  passed, including release receipt support; real executable checks pending).
+- Release payload source inventory: `.build/tmp/release-payload-inventory-20260909`.
+
+Hands-on user instructions are in `docs/experimental-testing.md`. No browser or
+heavy compilation is being launched during the morning meeting period.
