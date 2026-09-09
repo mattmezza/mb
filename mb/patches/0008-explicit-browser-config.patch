@@ -1,0 +1,56 @@
+diff --git a/chrome/BUILD.gn b/chrome/BUILD.gn
+--- a/chrome/BUILD.gn
++++ b/chrome/BUILD.gn
+@@ -391,7 +391,10 @@
+     ]
+ 
+     if (is_linux) {
+-      deps += [ "//mb:chrome_startup_arguments" ]
++      deps += [
++        "//mb:browser_config_gate",
++        "//mb:chrome_startup_arguments",
++      ]
+       sources += [
+         "app/chrome_main_linux.cc",
+         "app/chrome_main_linux.h",
+diff --git a/chrome/app/BUILD.gn b/chrome/app/BUILD.gn
+--- a/chrome/app/BUILD.gn
++++ b/chrome/app/BUILD.gn
+@@ -251,4 +251,7 @@
+   if (is_chrome_for_testing) {
+     deps += [ "//chrome/browser/chrome_for_testing:browser" ]
+   }
+-}
++  if (is_linux) {
++    deps += [ "//mb:browser_config_gate" ]
++  }
++}
+diff --git a/chrome/app/chrome_main_delegate.cc b/chrome/app/chrome_main_delegate.cc
+--- a/chrome/app/chrome_main_delegate.cc
++++ b/chrome/app/chrome_main_delegate.cc
+@@ -38,6 +38,10 @@
+ #include "base/time/time.h"
+ #include "base/timer/timer.h"
+ #include "build/build_config.h"
++
++#if BUILDFLAG(IS_LINUX)
++#include "mb/browser/browser_config_gate.h"
++#endif
+ #include "chrome/browser/buildflags.h"
+ #include "chrome/browser/chrome_content_browser_client.h"
+ #include "chrome/browser/chrome_resource_bundle_helper.h"
+@@ -1114,6 +1118,14 @@
+     return CHROME_RESULT_CODE_UNSUPPORTED_PARAM;
+   }
+ 
++#if BUILDFLAG(IS_LINUX)
++  // Product file I/O must follow the explicit-root web-security guard and the
++  // descriptor check above. Native profile and ProcessSingleton setup follow.
++  if (auto exit_code = mb::InitializeExplicitBrowserConfig()) {
++    return exit_code;
++  }
++#endif
++
+ #if BUILDFLAG(IS_WIN)
+   // Browser should not be sandboxed.
+   if (is_browser && IsSandboxedProcess()) {

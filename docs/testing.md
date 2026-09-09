@@ -580,3 +580,16 @@ All pages loaded in 77.9 seconds; native network observation recorded one launch
 and no exits. The harness differs from production startup, and debug activation
 latency remains open. Initial compile `093306.585602Z` required replacing the
 observer-owner field with Chromium `raw_ptr`.
+
+Explicit-config checkpoint: 65 native tests + 17 companion checks passed at
+`product-unit-20260909T112820.561762Z`; eight actual executable negatives passed
+at `browser-config-gate-20260909T112834.695783Z`. A valid-launch test caught early
+GURL use preventing native scheme registration; the gate now uses stateless
+Chromium canonicalizers and tests that registration remains possible afterward.
+Production build: `product-build-20260909T112714.948212Z.json`.
+
+Two-environment lifecycle passed in `two-env-odvs8nro`. Earlier `two-env-ypn3jp4x`
+caught the GURL startup bug; `l7vz8q38` exposed a process-title test assumption;
+`txtino73`, `9vku2wg9`, `t82iathl` exposed window-manager activation/close limitations.
+Final lifecycle verification used native POSIX session shutdown, not simulated
+keyboard success. Browser desktop smoke `112221.326481Z` remains failed on focus.

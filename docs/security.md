@@ -99,3 +99,18 @@ they do not claim that every upstream AI-related service is disabled. They do
 not alter Blink, networking, sandboxing, certificate validation, permissions,
 Safe Browsing or extension APIs. No remote UI code or replacement service is
 introduced. The native profile-settings customization command remains.
+
+## Early environment selection
+
+The Linux gate reads explicit TOML after Chromium's web-security and pipe-FD
+checks, validates every configured root and startup URL, and prepares only the
+selected private root. Early URL validation uses stateless Chromium parsers and
+canonicalizers; GURL cannot run before Content registers schemes because it
+marks the global registry used. A regression test verifies later registration.
+
+Patch 0009 rejects native user-data fallback when a product environment is
+installed. A deterministic startup probe changes its own prepared path into a
+regular file and verifies exit13 with the default root absent. Chromium's native
+singleton remains responsible for process locking. An open directory descriptor
+does not protect against arbitrary path replacement by other processes running
+as the same OS user.

@@ -1,0 +1,28 @@
+diff --git a/chrome/app/chrome_main_delegate.cc b/chrome/app/chrome_main_delegate.cc
+--- a/chrome/app/chrome_main_delegate.cc
++++ b/chrome/app/chrome_main_delegate.cc
+@@ -6,6 +6,7 @@
+ 
+ #include <stddef.h>
+ 
++#include <iostream>
+ #include <string>
+ #include <variant>
+ 
+@@ -596,6 +597,16 @@
+                                                     user_data_dir, false, true);
+   // Save inaccessible or invalid paths so the user may be prompted later.
+   if (specified_directory_was_invalid) {
++#if BUILDFLAG(IS_LINUX)
++    if (mb::GetProcessRuntimeConfig()) {
++      // Reject before PathService can fall back to the native default root.
++      // PreSandboxStartup is void; exit without crash logging or later startup.
++      std::cerr << "configuration: selected environment directory is unavailable; "
++                   "refusing native default-directory fallback\n";
++      base::Process::TerminateCurrentProcessImmediately(
++          CHROME_RESULT_CODE_UNSUPPORTED_PARAM);
++    }
++#endif
+     chrome::SetInvalidSpecifiedUserDataDir(user_data_dir);
+   }
+ 

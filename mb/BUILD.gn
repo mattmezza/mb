@@ -72,6 +72,21 @@ source_set("product_core") {
 }
 
 if (is_linux) {
+  component("browser_config_gate") {
+    sources = [
+      "browser/browser_config_gate.cc",
+      "browser/browser_config_gate.h",
+      "browser/browser_config_gate_internal.h",
+    ]
+    public = [
+      "browser/browser_config_gate.h",
+      "browser/browser_config_gate_internal.h",
+    ]
+    defines = [ "IS_MB_BROWSER_CONFIG_IMPL=1" ]
+    public_deps = [ ":product_core", "//base" ]
+    deps = [ "//chrome/common", "//url" ]
+  }
+
   source_set("chrome_startup_arguments") {
     sources = [
       "app/chrome_startup_arguments.cc",
@@ -110,8 +125,8 @@ source_set("unit_tests") {
     "//testing/gtest",
   ]
   if (is_linux) {
-    sources += [ "test/chrome_startup_arguments_test.cc" ]
-    deps += [ ":chrome_startup_arguments" ]
+    sources += [ "test/chrome_startup_arguments_test.cc", "test/browser_config_gate_test.cc" ]
+    deps += [ ":chrome_startup_arguments", ":browser_config_gate", "//base/test:test_support", "//chrome/common", "//url" ]
   }
 
 }
@@ -167,7 +182,6 @@ test("mb_browser_tests") {
     "//chrome/browser/ui/views/tabs/common:impl",
     "//chrome/browser/ui/webui:configs",
     "//chrome/common",
-    "//chrome/test:browser_tests_runner",
     "//chrome/test:test_support",
     "//chrome/test:test_support_ui",
     "//chrome/test/base:browser_feature_test_waiters",
@@ -196,6 +210,10 @@ test("mb_browser_tests") {
     "//ui/views",
     "//url",
   ]
+  if (is_linux) {
+    sources += [ "test/environment_root_fallback_probe_browsertest.cc", "test/browser_tests_main.cc" ]
+    deps += [ ":browser_config_gate", "//chrome/test/base:chrome_test_launcher" ]
+  }
   data = [ "//chrome/test/data/media/pink_noise_140ms.wav" ]
   data_deps = [ "//chrome:packed_resources" ]
 }

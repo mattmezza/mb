@@ -208,9 +208,18 @@ def main(*, product_build=False):
             if not re.search(rf"= {browser.pid}\b", properties):
                 raise RuntimeError("Window no longer belongs to the test browser")
 
-        def key(keys):
+        def focus_owned():
             owned()
-            command("xdotool", "key", "--window", window, "--clearmodifiers", keys)
+            command("xdotool", "windowactivate", "--sync", window)
+            if command("xdotool", "getactivewindow").strip() != window:
+                raise RuntimeError("Test window did not become active")
+            owned()
+
+        def key(keys):
+            focus_owned()
+            # Native accelerators need XTEST input to the focused window;
+            # window-directed XSendEvent keys can be ignored by Chromium.
+            command("xdotool", "key", "--clearmodifiers", keys)
 
         def title():
             owned()
@@ -218,7 +227,7 @@ def main(*, product_build=False):
 
         def navigate(url, expected, *, new_tab=False):
             key("ctrl+l")
-            command("xdotool", "type", "--window", window, "--clearmodifiers", "--delay", "1", url)
+            command("xdotool", "type", "--clearmodifiers", "--delay", "1", url)
             key("alt+Return" if new_tab else "Return")
             wait_until(lambda: expected in title(), f"page title contains {expected!r}")
 

@@ -125,3 +125,12 @@ windows/processes of the selected environment to exit before relaunch. A
 second launch activating an existing Chromium process will not silently replace
 that process's configuration. Schema version 1 is required; unsupported versions
 fail without rewriting the file. There is no automatic migration yet.
+
+## Explicit browser integration checkpoint
+
+The debug browser accepts `--config /absolute/config.toml --environment work`.
+Default XDG discovery and remembered selection are still pending integration.
+The companion validation/list/path commands remain usable. Startup validates
+URLs in every environment before creating the selected root; a supplied native
+`--user-data-dir=PATH` must match that root. UI settings and configured startup
+URL opening are the next compiled milestone.

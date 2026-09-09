@@ -113,3 +113,15 @@ simultaneous preparations converging on one directory inode.
 
 These are standalone core tests, not evidence that the browser can yet select,
 activate, or isolate named environments.
+
+## Browser startup checkpoint (2026-09-09)
+
+Explicit `--config FILE --environment NAME` now selects a real independent
+Chromium user-data root before native singleton initialization. Production Xorg
+smoke `two-env-odvs8nro` launched personal/work without --user-data-dir, verified
+distinct native lock owners and profile directories, and verified that a second
+personal invocation activated its existing process and exited0. Only the selected
+root was created by the first launch. Both owners exited0 through Chromium's
+POSIX SessionEnding handler and persisted that exit type. Keyboard/window-manager
+close automation remains open. This is not yet cookie/history/extension isolation
+acceptance. Default XDG selection, UI application and startup URLs remain pending.
