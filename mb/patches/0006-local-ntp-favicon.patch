@@ -1,0 +1,24 @@
+diff --git a/chrome/browser/ui/webui/chrome_web_ui_controller_factory.cc b/chrome/browser/ui/webui/chrome_web_ui_controller_factory.cc
+--- a/chrome/browser/ui/webui/chrome_web_ui_controller_factory.cc
++++ b/chrome/browser/ui/webui/chrome_web_ui_controller_factory.cc
+@@ -424,8 +424,19 @@
+ 
+   if (page_url.host() == chrome::kChromeUINewTabPageHost ||
+       page_url.host() == chrome::kChromeUINewTabHost) {
++#if BUILDFLAG(IS_LINUX)
++    // Linux's bundled NTP uses the product's manifest-derived favicon. The
++    // other native-page favicon routes remain unchanged.
++    return VersionUI::GetFaviconResourceBytes(scale_factor);
++#else
+     return NewTabPageUI::GetFaviconResourceBytes(scale_factor);
+-  }
++#endif
++  }
++#if BUILDFLAG(IS_LINUX)
++  if (page_url.host() == chrome::kChromeUINewTabPageThirdPartyHost) {
++    return VersionUI::GetFaviconResourceBytes(scale_factor);
++  }
++#endif
+ 
+ #if BUILDFLAG(IS_WIN) || BUILDFLAG(IS_MAC) || BUILDFLAG(IS_LINUX)
+   if (page_url.host() == chrome::kChromeUIWhatsNewHost) {

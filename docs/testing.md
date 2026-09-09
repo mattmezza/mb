@@ -477,26 +477,79 @@ The five-case run `product-browser-tests-20260908T215044.420082Z` passed
 native AX names/selected state, controlled waiting/loading/completion indicators,
 owned renderer crash/recovery on the same WebContents and tab view, and real
 loopback WAV playback with native audibility/mute/unmute indicators. Audio used
-the pinned upstream `chrome/test/data/media/pink_noise_140ms.wav`, normal test
-user gesture, and the existing audio service; no fake audibility or autoplay
-bypass. Crash allowance covered only the test-owned renderer.
+the pinned upstream `chrome/test/data/media/pink_noise_140ms.wav`, an ordinary
+test user gesture and the existing audio service. Crash allowance covered only
+the test-owned renderer.
 
 The Return-key case initially failed its post-activation focus assertion.
-Activation itself succeeded. Inspection of BrowserView::OnActiveTabChanged
-confirmed native selected-WebContents focus restoration; the revised case waits
-for the local page to load and asserts focus inside the actual active contents
-view. Both AX/keyboard cases pass in the subsequent
-`product-browser-tests-20260908T215551.366276Z` run (all three cases passed).
-These are native view/state checks, not AT-SPI/screen-reader certification,
-crash-icon pixel testing, or pointer hit-testing of the mute button.
+Activation succeeded. Inspection of BrowserView::OnActiveTabChanged confirmed
+native selected-WebContents focus restoration; the revised case waits for the
+local page to load and asserts focus inside the actual active contents view.
+Both AX/keyboard cases and the scale case passed in
+`product-browser-tests-20260908T215551.366276Z`. These are native view/state
+checks, not AT-SPI/screen-reader certification, crash-icon pixel testing, or
+pointer hit-testing of the mute button.
 
 The expanded scale run passed native model/view/presentation correctness, while
-performance remains open. Decomposition in the same run reports loaded native
-activation itself at 249 / 239 / 290 ms; the first idle boundary adds 44 / 196 /
-224 ms. The subsequent forced all-widget layout takes 64 / 0.4 / 0.4 ms.
-This confirms substantial synchronous activation work; queued work contributes
-additional delay. A separate pass requires actual TabView::IsActive plus full
-viewport containment, then requests a subsequent successful frame: 523 / 458 /
+performance remains open. Loaded native activation itself took 249 / 239 / 290 ms;
+the first idle boundary added 44 / 196 / 224 ms. The subsequent forced all-widget
+layout took 64 / 0.4 / 0.4 ms. A separate pass required actual TabView::IsActive
+and full viewport containment, then a subsequent successful frame: 523 / 458 /
 547 ms from activation start, with native presentation flags 0. These are
 subsequent-frame checkpoints, not earliest-frame or hardware input latency.
-No animations or browser services are bypassed.
+
+## Bulk local-page navigation diagnostic
+
+`product-browser-tests-20260908T221016.242372Z` passed all 100 data-page
+URL/title/load checks after the initial browser was ready. Native mutation took
+22.119 s and all pages completed by 53.066 s; the observed network service had
+zero lifecycle events before intentional teardown. The recorder requires an
+actual out-of-process service and reports native crash/kill/exit status if
+observed. This narrows the original production startup failure but does not
+reproduce its raw command-line/initialization sequence or prove fast navigation.
+The outer runner used a 300-second bound; native waits were bounded per page and
+by a three-minute workload deadline.
+
+## Cleanup and native trace follow-up
+
+`product-browser-tests-20260908T221539.543092Z` passed both cleanup cases and
+the expanded 100-tab trace case. The first keyboard attempt, 220902.297417,
+crashed in the uninitialized Ozone ui_controls test helper before key handling.
+The corrected case uses the native Views EventGenerator, checks omnibox focus,
+and observes actual local Return/Ctrl+Return navigation. It does not claim
+OS-level input synthesis. The surface case checks the actual product NTP,
+unavailable Customize Chrome entry, and omitted AI action/hints while the
+upstream AI shortcut feature is enabled.
+
+The native trace runs after all prior measurements and records fixed numeric
+aggregates only. Trace data-loss/error count was 0; all expected markers/native
+scopes were present, and traced self times partitioned each root duration.
+For selection 0, native activation took 262 ms with 179 ms inside BrowserView's
+active-tab callback; its UpdateUIForContents/BrowserView layout path accounted
+for 115 ms. Inclusive nested durations overlap and must not be added. The other
+two instrumented activations took 274 / 244 ms. These remain debug measurements
+with tracing overhead, not an optimization or a release result.
+
+Cleanup compilation failures are retained in build logs: 220029.782490 rejected
+unreachable Linux menu code; 220346.523423 rejected test access to a private
+helper, a missing interactive-input header and a vexing parse. Preprocessor
+guards and the public LocationBar interface corrected them. Build 220731.524618
+passed, followed by the recorded input-harness runtime failure. Build 221422.316201
+and its three-case run passed after switching to native Views EventGenerator.
+
+
+On 2026-09-09, the saved cleanup review (`sidebar-input-20260908T221951.174452Z`)
+was found to have reached its bounded lifetime during the limits pause. The
+helper terminated only its owned process group; this is not a clean shutdown
+pass. A fresh review (`sidebar-input-20260909T072331.107633Z`) painted the local
+product NTP with no inherited AI chip after clicking the owned window to focus
+it. Desktop focus repeatedly moved elsewhere; subsequent local navigation timed
+out and triggered scoped cleanup. The initial captures still showed about:blank,
+so their filenames are not proof of NTP navigation. Capture `03-focused-ntp.png`
+is the painted NTP. No keyboard or private-window pass is inferred from this run.
+
+The matching NTP/sidebar regression run at
+`product-browser-tests-20260909T072551.791965Z` passed all nine cases, using
+`product-test-build-20260908T221422.316201Z.json`. This covers the local NTP
+routing, extension override, genuine incognito NTP, blocked script execution,
+and sidebar projection/orientation/geometry persistence cases.

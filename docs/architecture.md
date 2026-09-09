@@ -71,7 +71,8 @@ available. The product command menu routes through Chromium's existing command
 handlers, including real off-the-record window creation and DevTools.
 
 The native implementation has scrolling but eagerly creates child tab views.
-Its responsiveness with 100 tabs remains untested. Existing upstream tests are
+Its 100-tab correctness and native presentation checkpoint pass, but measured
+debug activation is slow and bulk local-page startup failed its loading review. Existing upstream tests are
 useful starting points, not acceptance evidence for this fork.
 
 ## Environments and private browsing
@@ -145,3 +146,13 @@ All upstream observations above refer to
 [the pinned Chromium commit](https://chromium.googlesource.com/chromium/src/+/d04cdb24d67b081f6cf80200ffc5233f44b61109/).
 The binding build/test gate is recorded in [STATUS.md](../STATUS.md), and
 [testing.md](testing.md) distinguishes procedures from observed results.
+
+## Linux UI cleanup integration (pending runtime gate)
+
+Patch0005 removes inherited AI Mode omnibox entry points/placeholder hints and
+the AI Ctrl+Enter interception, preserving ordinary omnibox navigation. It also
+omits the unsupported Customize Chrome NTP side-panel and menu entry points.
+It does not remove profile settings, extension infrastructure or WebContents.
+Patch0006 routes Linux bundled NTP favicon requests through the existing
+manifest-derived VersionUI product favicon resource; other native page icons
+and other platforms retain their upstream routes. Both are narrow UI patches.

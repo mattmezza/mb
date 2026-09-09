@@ -1,7 +1,15 @@
 # Arch Linux build setup
 
-Status: dependency preflight, pinned source/dependency fetch, hooks, and GN
-generation pass. The first unmodified browser build is running.
+Status: dependency preflight, pinned source/dependency fetch, hooks, GN
+generation, the unmodified upstream build and reviewed sandboxed Xorg launch
+pass. Product branding also has a reviewed debug build and scoped Xorg launch.
+The initial native-sidebar checkpoint, focused DevTools routes and 100-tab model
+correctness passed; the 100-local-page startup/performance review failed. AX
+name/selection, Return activation/focus, and loading/crash/audio checks passed in
+focused product runs. Expanded scale correctness and next-frame checks passed,
+without establishing responsiveness. Broader AT-SPI/screen-reader,
+pointer/mute, browser configuration wiring and remaining native UI cleanup are
+pending, as are release output and package assembly.
 Python 3.11+ is needed for the bootstrap tool's standard-library TOML reader.
 
 ## Dependencies
@@ -70,7 +78,8 @@ python3 mb/tools/upstream.py gen
 python3 mb/tools/upstream.py build --jobs 4
 ```
 
-Hooks and GN generation have passed on this machine; the build is running. Each
+Hooks and GN generation have passed on this machine, and the unmodified build
+has a retained successful receipt. Each
 stage verifies both Git pins plus nested Git dependency revisions and requires
 clean tracked/untracked source, then
 writes a timestamped log and result receipt under `.build/logs`. Do not run

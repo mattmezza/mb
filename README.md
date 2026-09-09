@@ -22,6 +22,15 @@ The pinned, unmodified source built and passed a sandboxed launch on the actual
 Xorg session; see the [baseline review](docs/upstream-baseline-2026-09-08.md).
 Product branding integration has produced a successful debug build and focused
 test receipts and a [reviewed product launch](docs/product-baseline-2026-09-08.md).
+The initial native-sidebar Xorg checkpoint passed basic tab inputs,
+pinning/reorder/groups, resize/collapse and F12. Focused DevTools routes and
+100-tab model correctness passed; the 100-local-page startup/performance review
+failed and its cause remains unresolved. AX name/selection, Return activation and
+focus, plus loading/crash/audio checks passed in focused product runs. Expanded
+scale correctness and next-frame checks passed without establishing
+responsiveness. Broader AT-SPI/screen-reader, pointer/mute, browser
+configuration wiring, and remaining native UI cleanup are still pending.
+Release-mode output, package assembly and daily-driver acceptance remain open.
 The full daily-driver acceptance remains pending. Required Chromium licenses,
 notices and credits must accompany any eventual distribution; no distributable
 package is available yet.

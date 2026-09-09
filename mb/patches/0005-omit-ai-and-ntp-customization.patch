@@ -1,0 +1,175 @@
+diff --git a/chrome/browser/ui/omnibox/ai_mode_page_action_controller.cc b/chrome/browser/ui/omnibox/ai_mode_page_action_controller.cc
+--- a/chrome/browser/ui/omnibox/ai_mode_page_action_controller.cc
++++ b/chrome/browser/ui/omnibox/ai_mode_page_action_controller.cc
+@@ -10,6 +10,7 @@
+ #include "base/functional/callback_helpers.h"
+ #include "base/metrics/histogram_functions.h"
+ #include "base/types/to_address.h"
++#include "build/build_config.h"
+ #include "chrome/browser/autocomplete/aim_eligibility_service_factory.h"
+ #include "chrome/browser/bitmap_fetcher/bitmap_fetcher_service.h"
+ #include "chrome/browser/bitmap_fetcher/bitmap_fetcher_service_factory.h"
+@@ -178,6 +179,12 @@
+ bool AiModePageActionController::ShouldShowPageAction(
+     Profile* profile,
+     LocationBar& location_bar) {
++#if BUILDFLAG(IS_LINUX)
++  // Linux product builds omit the inherited AI Mode omnibox action.
++  static_cast<void>(profile);
++  static_cast<void>(location_bar);
++  return false;
++#else
+   if (!profile->GetPrefs()->GetBoolean(omnibox::kShowAiModeOmniboxButton)) {
+     return false;
+   }
+@@ -258,6 +265,7 @@
+   }
+ 
+   return has_focus;
++#endif
+ }
+ 
+ void AiModePageActionController::OnPageActionIconShown(
+diff --git a/chrome/browser/ui/toolbar/app_menu_model.cc b/chrome/browser/ui/toolbar/app_menu_model.cc
+--- a/chrome/browser/ui/toolbar/app_menu_model.cc
++++ b/chrome/browser/ui/toolbar/app_menu_model.cc
+@@ -1229,6 +1229,7 @@
+     }
+   }
+ 
++#if !BUILDFLAG(IS_LINUX)
+   if (CustomizeChromePageHandler::IsSupported(
+           NtpCustomBackgroundServiceFactory::GetForProfile(
+               browser->GetProfile()),
+@@ -1239,6 +1240,7 @@
+         features::IsRoundedIconsEnabled()   ? kEditIcon
+                                             : kEditChromeRefreshOldIcon);
+   }
++#endif
+ 
+   AddSeparator(ui::NORMAL_SEPARATOR);
+ 
+diff --git a/chrome/browser/ui/views/location_bar/location_bar_view.cc b/chrome/browser/ui/views/location_bar/location_bar_view.cc
+--- a/chrome/browser/ui/views/location_bar/location_bar_view.cc
++++ b/chrome/browser/ui/views/location_bar/location_bar_view.cc
+@@ -1575,6 +1575,9 @@
+     aim_page_action_controller->UpdatePageAction();
+   }
+ 
++#if BUILDFLAG(IS_LINUX)
++  ai_mode_hint_label_->SetVisible(false);
++#else
+   if (omnibox::kShowRhsAimHint.Get()) {
+     if (omnibox_controller_->popup_state_manager()->popup_state() ==
+         OmniboxPopupState::kClassic) {
+@@ -1589,6 +1592,7 @@
+ #endif
+     ai_mode_hint_label_->SetEnabledColor(kColorOmniboxTextDimmed);
+   }
++#endif
+ }
+ 
+ void LocationBarView::RefreshPageActionContainerViewAndIconsVisibility(
+diff --git a/chrome/browser/ui/views/omnibox/omnibox_placeholder_util.cc b/chrome/browser/ui/views/omnibox/omnibox_placeholder_util.cc
+--- a/chrome/browser/ui/views/omnibox/omnibox_placeholder_util.cc
++++ b/chrome/browser/ui/views/omnibox/omnibox_placeholder_util.cc
+@@ -8,6 +8,7 @@
+ 
+ #include "base/strings/strcat.h"
+ #include "base/time/time.h"
++#include "build/build_config.h"
+ #include "chrome/browser/autocomplete/aim_eligibility_service_factory.h"
+ #include "chrome/browser/search_engines/ai_mode_button_service_factory.h"
+ #include "chrome/browser/search_engines/template_url_service_factory.h"
+@@ -186,6 +187,10 @@
+ }
+ 
+ bool ShouldInstallAimPlaceholderText(LocationBar* location_bar) {
++#if BUILDFLAG(IS_LINUX)
++  static_cast<void>(location_bar);
++  return false;
++#else
+   if (!location_bar) {
+     return false;
+   }
+@@ -206,6 +211,7 @@
+              ->edit_model()
+              ->is_caret_visible() &&
+          GetAiModeUiConfig(*location_bar);
++#endif
+ }
+ 
+ bool IsAimPlaceholderText(LocationBar* location_bar, std::u16string_view text) {
+diff --git a/chrome/browser/ui/views/omnibox/omnibox_view_views.cc b/chrome/browser/ui/views/omnibox/omnibox_view_views.cc
+--- a/chrome/browser/ui/views/omnibox/omnibox_view_views.cc
++++ b/chrome/browser/ui/views/omnibox/omnibox_view_views.cc
+@@ -1938,6 +1938,7 @@
+   const bool command = event.IsCommandDown();
+   switch (event.key_code()) {
+     case ui::VKEY_RETURN: {
++#if !BUILDFLAG(IS_LINUX)
+       if (omnibox::kShowRhsAimHint.Get()) {
+ #if BUILDFLAG(IS_MAC)
+         const bool ai_mode_modifier = command;
+@@ -1950,6 +1951,7 @@
+           return true;
+         }
+       }
++#endif
+ 
+       WindowOpenDisposition disposition =
+           searchbox::ComputeOpenDispositionFromModifiersAndLogToUma(
+diff --git a/chrome/browser/ui/views/side_panel/customize_chrome/side_panel_controller_views.cc b/chrome/browser/ui/views/side_panel/customize_chrome/side_panel_controller_views.cc
+--- a/chrome/browser/ui/views/side_panel/customize_chrome/side_panel_controller_views.cc
++++ b/chrome/browser/ui/views/side_panel/customize_chrome/side_panel_controller_views.cc
+@@ -6,6 +6,7 @@
+ 
+ #include "base/functional/bind.h"
+ #include "base/functional/callback.h"
++#include "build/build_config.h"
+ #include "chrome/browser/extensions/settings_api_helpers.h"
+ #include "chrome/browser/profiles/profile.h"
+ #include "chrome/browser/search/background/ntp_custom_background_service_factory.h"
+@@ -100,6 +101,11 @@
+ }
+ 
+ bool SidePanelControllerViews::CanShowOnURL(const GURL& url) const {
++#if BUILDFLAG(IS_LINUX)
++  // The Linux product supplies its own NTP and has no Customize Chrome UI.
++  static_cast<void>(url);
++  return false;
++#else
+   // Check to make sure that all of the required services work for the
+   // CustomizeChromePageHandler
+ 
+@@ -112,6 +118,7 @@
+   }
+ 
+   return true;
++#endif
+ }
+ 
+ bool SidePanelControllerViews::ShouldEnableEditTheme(const GURL& url) const {
+diff --git a/chrome/browser/ui/views/toolbar/pinned_action_toolbar_button_menu_model.cc b/chrome/browser/ui/views/toolbar/pinned_action_toolbar_button_menu_model.cc
+--- a/chrome/browser/ui/views/toolbar/pinned_action_toolbar_button_menu_model.cc
++++ b/chrome/browser/ui/views/toolbar/pinned_action_toolbar_button_menu_model.cc
+@@ -12,6 +12,7 @@
+ #include "base/containers/fixed_flat_map.h"
+ #include "base/metrics/user_metrics.h"
+ #include "base/strings/strcat.h"
++#include "build/build_config.h"
+ #include "chrome/browser/profiles/profile.h"
+ #include "chrome/browser/ui/actions/chrome_action_id.h"
+ #include "chrome/browser/ui/actions/chrome_action_properties.h"
+@@ -194,6 +195,11 @@
+   if (!is_pinned && items_[index].action_id == kActionUnpinActionFromToolbar) {
+     return false;
+   }
++#if BUILDFLAG(IS_LINUX)
++  if (items_[index].action_id == kActionSidePanelShowCustomizeChromeToolbar) {
++    return false;
++  }
++#endif
+   return GetActionItemFor(items_[index].action_id)->GetVisible();
+ }
+ 

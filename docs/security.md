@@ -88,3 +88,14 @@ replace this UI with a remote document before normal URL rewriting. Search
 engine selection, native OTR routing and legitimate extension NTP overrides
 retain their upstream paths. See [local NTP integration](local-new-tab.md) for
 scope and pending validation. No browsing-origin or certificate policy is relaxed.
+
+## Linux inherited UI omissions (pending runtime gate)
+
+The AI Mode omnibox action, AI placeholder/hint and AI Ctrl+Enter shortcut are
+omitted from the Linux product UI. Ordinary native omnibox handling remains.
+Unsupported Customize Chrome NTP customization entry points are also omitted
+because the product owns its compiled NTP. These changes remove UI entry points;
+they do not claim that every upstream AI-related service is disabled. They do
+not alter Blink, networking, sandboxing, certificate validation, permissions,
+Safe Browsing or extension APIs. No remote UI code or replacement service is
+introduced. The native profile-settings customization command remains.

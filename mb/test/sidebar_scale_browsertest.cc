@@ -3,12 +3,15 @@
 #include <array>
 #include <cstdint>
 #include <string>
+#include <utility>
 
 #include "base/strings/string_number_conversions.h"
 #include "base/test/gtest_tags.h"
 #include "base/test/run_until.h"
 #include "base/test/test_future.h"
+#include "base/test/tracing/test_trace_processor.h"
 #include "base/time/time.h"
+#include "base/trace_event/trace_event.h"
 #include "chrome/browser/ui/browser.h"
 #include "chrome/browser/ui/tabs/tab_strip_model.h"
 #include "chrome/browser/ui/tabs/tab_strip_model_delegate.h"
@@ -23,6 +26,7 @@
 #include "content/public/test/browser_test_utils.h"
 #include "mb/ui/sidebar/sidebar_view.h"
 #include "testing/gtest/include/gtest/gtest.h"
+#include "third_party/perfetto/protos/perfetto/config/trace_config.gen.h"
 #include "ui/compositor/compositor.h"
 #include "ui/views/view.h"
 #include "ui/views/view_utils.h"
@@ -177,6 +181,136 @@ class MbSidebarScaleBrowserTest
     RecordNumber(prefix + "_presentation_flags", feedback.flags);
   }
 
+  void TraceLoadedSelections() {
+    // Independent third pass. Startup and stop/SQL parsing are outside the
+    // traced operations and outside every previously recorded latency metric.
+    base::test::TestTraceProcessor trace;
+    auto config = base::test::DefaultTraceConfig("ui,views", false);
+    trace.StartTrace(config, perfetto::kCustomBackend);
+    constexpr std::array kIndexes{0, 99, 50};
+    std::array<int64_t, 3> sync_us{};
+    for (size_t i = 0; i < kIndexes.size(); ++i) {
+      // A fixed marker scopes existing native nested trace events. No URLs or
+      // titles are passed as trace arguments or result tags.
+      TRACE_EVENT("ui", "MbSidebar.LoadedSelection");
+      const base::TimeTicks start = base::TimeTicks::Now();
+      tab_strip_model()->ActivateTabAt(kIndexes[i]);
+      sync_us[i] = (base::TimeTicks::Now() - start).InMicroseconds();
+    }
+    const auto status = trace.StopAndParseTrace();
+    ASSERT_TRUE(status.ok()) << status.message();
+
+    // Dropped packets/slices make attribution misleading: fail instead of
+    // interpreting missing spans as zero cost.
+    auto loss = trace.RunQuery(
+        "SELECT COALESCE(SUM(value),0) FROM stats "
+        "WHERE severity IN ('data_loss','error')");
+    ASSERT_TRUE(loss.has_value()) << loss.error();
+    ASSERT_EQ(loss->size(), 2u);
+    ASSERT_EQ((*loss)[1].size(), 1u);
+    int64_t loss_count = 0;
+    ASSERT_TRUE(base::StringToInt64((*loss)[1][0], &loss_count));
+    RecordNumber("sidebar_trace_data_loss_or_error", loss_count);
+    ASSERT_EQ(loss_count, 0);
+
+    auto roots = trace.RunQuery(
+        "SELECT id,dur FROM slice "
+        "WHERE name='MbSidebar.LoadedSelection' ORDER BY ts,id");
+    ASSERT_TRUE(roots.has_value()) << roots.error();
+    ASSERT_EQ(roots->size(), kIndexes.size() + 1);
+
+    constexpr std::array<std::pair<const char*, const char*>, 14> kScopes{{
+        {"MbSidebar.LoadedSelection", "marker"},
+        {"TabStripModel::ActivateTab", "model_activate"},
+        {"BrowserView::OnActiveTabChanged", "browser_active"},
+        {"BrowserView::UpdateUIForContents", "browser_update_ui"},
+        {"BrowserView::Layout", "browser_layout"},
+        {"WebView::SetWebContents", "webview_set"},
+        {"WebView::AttachWebContentsNativeView", "webview_attach"},
+        {"WebView::DetachWebContentsNativeView", "webview_detach"},
+        {"Widget::LayoutRootViewIfNecessary", "widget_layout"},
+        {"View::LayoutImmediately", "view_layout"},
+        {"LayoutManagerBase::Layout", "layout_manager"},
+        {"View::LayoutChildren", "view_layout_children"},
+        {"View::Layout(bounds_changed)", "view_layout_bounds_changed"},
+        {"View::UpdateParentLayers", "view_update_parent_layers"},
+    }};
+
+    for (size_t i = 0; i < kIndexes.size(); ++i) {
+      ASSERT_EQ((*roots)[i + 1].size(), 2u);
+      int64_t root_id = 0;
+      int64_t root_duration = 0;
+      ASSERT_TRUE(base::StringToInt64((*roots)[i + 1][0], &root_id));
+      ASSERT_TRUE(base::StringToInt64((*roots)[i + 1][1], &root_duration));
+      ASSERT_GE(root_id, 0);
+      ASSERT_GT(root_duration, 0);
+      const std::string prefix =
+          "sidebar_trace_loaded_select_" + base::NumberToString(kIndexes[i]);
+      RecordNumber(prefix + "_instrumented_op_sync_us", sync_us[i]);
+      // parent_id is native slice nesting on the same track. Do not mix in
+      // unrelated browser/renderer work merely overlapping in wall time.
+      const std::string tree =
+          "WITH RECURSIVE subtree AS ("
+          "SELECT id,parent_id,name,dur FROM slice WHERE id=" +
+          base::NumberToString(root_id) +
+          " UNION ALL SELECT s.id,s.parent_id,s.name,s.dur FROM slice s "
+          "JOIN subtree p ON s.parent_id=p.id) ";
+      auto incomplete =
+          trace.RunQuery(tree + "SELECT COUNT(*) FROM subtree WHERE dur<0");
+      ASSERT_TRUE(incomplete.has_value()) << incomplete.error();
+      ASSERT_EQ(incomplete->size(), 2u);
+      ASSERT_EQ((*incomplete)[1].size(), 1u);
+      ASSERT_EQ((*incomplete)[1][0], "0");
+
+      auto rows =
+          trace.RunQuery(tree +
+                         "SELECT s.name,COUNT(*),SUM(s.dur),"
+                         "SUM(s.dur-COALESCE((SELECT SUM(c.dur) FROM subtree c "
+                         "WHERE c.parent_id=s.id),0)),MAX(s.dur) "
+                         "FROM subtree s GROUP BY s.name ORDER BY s.name");
+      ASSERT_TRUE(rows.has_value()) << rows.error();
+      int64_t accounted_self_ns = 0;
+      int64_t other_self_ns = 0;
+      bool found_model = false;
+      bool found_browser = false;
+      for (size_t row = 1; row < rows->size(); ++row) {
+        const auto& values = (*rows)[row];
+        ASSERT_EQ(values.size(), 5u);
+        int64_t count = 0, inclusive_ns = 0, self_ns = 0, max_ns = 0;
+        ASSERT_TRUE(base::StringToInt64(values[1], &count));
+        ASSERT_TRUE(base::StringToInt64(values[2], &inclusive_ns));
+        ASSERT_TRUE(base::StringToInt64(values[3], &self_ns));
+        ASSERT_TRUE(base::StringToInt64(values[4], &max_ns));
+        ASSERT_GE(self_ns, 0);
+        accounted_self_ns += self_ns;
+        const char* label = nullptr;
+        for (const auto& [event_name, safe_label] : kScopes) {
+          if (values[0] == event_name) {
+            label = safe_label;
+            break;
+          }
+        }
+        found_model |= values[0] == "TabStripModel::ActivateTab";
+        found_browser |= values[0] == "BrowserView::OnActiveTabChanged";
+        if (label) {
+          const std::string scope_prefix = prefix + "_" + label;
+          RecordNumber(scope_prefix + "_count", count);
+          RecordNumber(scope_prefix + "_inclusive_us", inclusive_ns / 1000);
+          RecordNumber(scope_prefix + "_self_us", self_ns / 1000);
+          RecordNumber(scope_prefix + "_max_us", max_ns / 1000);
+        } else {
+          other_self_ns += self_ns;
+        }
+      }
+      ASSERT_TRUE(found_model);
+      ASSERT_TRUE(found_browser);
+      // Self-times partition the root. Inclusive times overlap and must never
+      // be added together to claim a proportion of the operation.
+      ASSERT_EQ(accounted_self_ns, root_duration);
+      RecordNumber(prefix + "_other_self_us", other_self_ns / 1000);
+    }
+  }
+
   void RecordElapsedMicros(const char* property_name,
                            base::TimeTicks start_time) {
     const int64_t elapsed_micros =
@@ -283,6 +417,8 @@ IN_PROC_BROWSER_TEST_F(MbSidebarScaleBrowserTest,
   for (const int index : std::array{0, 99, 50}) {
     ASSERT_NO_FATAL_FAILURE(MeasureLoadedSelectionPresentation(index));
   }
+
+  ASSERT_NO_FATAL_FAILURE(TraceLoadedSelections());
 
   // The active item remains a native view anchor after every model mutation.
   VerticalTabStripRegionView* const region = region_view();
