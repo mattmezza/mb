@@ -602,3 +602,5 @@ explicit-URL fixture incorrectly used about:blank#explicit, which native launch
 validation excludes. Corrected local-data fixture passed115134.422351Z. Build
 115014.248455Z passed; production rebuild pending. Test compile114441 required
 explicit View* conversion from Chromium raw_ptr children.
+
+Default XDG checkpoint:73 native +17 companion checks passed115635.362056Z; production115742.544580Z passed. Executable smoke default-config-_82bbob9 verified bootstrap, XDG roots, remembered activation and unchanged selection through private shutdown. Eight configuration negatives passed115834.843829Z. Initial unit tests encountered /tmp quota; their runner now supplies build scratch storage.

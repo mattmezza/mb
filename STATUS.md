@@ -71,3 +71,5 @@ Production build115205.086172Z passed for0011. Next: default XDG config/state.
 
 Default XDG helper/gate integrated; native compilation pending. Earlier staging
 script stopped at a test formatting mismatch; complete GN/test additions now in root.
+
+Latest checkpoint: production115742.544580Z;73 native +17 companion passed115635.362056Z. Default XDG smoke default-config-_82bbob9 and eight negatives115834.843829Z passed. UI0010/0011 and default XDG are implemented. Explicit --config remembered selection remains open. Next: compile prepared MV3/OTR tests.

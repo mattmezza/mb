@@ -145,3 +145,9 @@ into native Views/startup. These require restart. Explicit valid command-line
 URLs, incognito/guest, crash recovery and native session restoration retain
 precedence; configured URLs are not reinjected into an already-running process.
 Existing native startup URL preferences/policies also retain precedence.
+
+## Default XDG startup
+
+Default discovery/bootstrap and remembered selection are now implemented and tested. Configuration is `${XDG_CONFIG_HOME:-$HOME/.config}/<profile_directory_name>/config.toml`; data defaults to `${XDG_DATA_HOME:-$HOME/.local/share}/<profile_directory_name>/environments/personal`. Generated directories are0700 and configuration0600; existing files are never replaced.
+
+Versioned selection state lives beneath XDG_STATE_HOME (fallback ~/.local/state). Incognito leaves it unchanged. Explicit --config currently remains stateless: restore_last_environment applies only in default-XDG mode. Native --user-data-dir without config/environment opts out of discovery for temporary profiles. Product options currently require restart.
