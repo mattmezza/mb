@@ -63,3 +63,5 @@ records the maintenance gates and work still required to rehearse a full update.
 Chromium's source license is retained verbatim in [LICENSE.chromium](LICENSE.chromium).
 Vendored toml++ retains its MIT license and provenance. Binary packages must also
 include generated third-party notices; no package is available yet.
+
+For hands-on checks of the current debug build, see [experimental testing](docs/experimental-testing.md). Close trial windows before rebuilding.
