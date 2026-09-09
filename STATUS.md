@@ -60,3 +60,11 @@ Build/test failures and prior evidence are retained; see docs/testing.md.
 UI config0010: build114007.422487Z and four browser tests114210.015824Z passed.
 Production build114329.749888Z passed. Native width/collapse/theme and synchronous multiwindow
 restoration are covered; asynchronous extra-profile restores remain limited.
+
+Patch0011 copied into root; startup URL/close-button compilation pending.
+
+UI actions0011 compiled115014.248455Z. Configured URLs/close visibility, native
+pins, OTR, session restoration and existing-process behavior passed114746;
+corrected explicit-URL fixture passed115134.422351Z. Production rebuild pending.
+
+Production build115205.086172Z passed for0011. Next: default XDG config/state.

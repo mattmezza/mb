@@ -1,0 +1,89 @@
+diff --git a/chrome/browser/ui/views/tabs/common/tab_view.cc b/chrome/browser/ui/views/tabs/common/tab_view.cc
+--- a/chrome/browser/ui/views/tabs/common/tab_view.cc
++++ b/chrome/browser/ui/views/tabs/common/tab_view.cc
+@@ -12,6 +12,11 @@
+ #include "base/metrics/user_metrics.h"
+ #include "base/metrics/user_metrics_action.h"
+ #include "base/time/time.h"
++#include "build/build_config.h"
++
++#if BUILDFLAG(IS_LINUX)
++#include "mb/browser/runtime_ui_actions.h"
++#endif
+ #include "chrome/browser/glic/browser_ui/tab_underline_controller.h"
+ #include "chrome/browser/glic/browser_ui/tab_underline_view.h"
+ #include "chrome/browser/glic/public/glic_enabling.h"
+@@ -770,6 +775,14 @@
+   }
+ 
+   if (child_view == close_button_) {
++#if BUILDFLAG(IS_LINUX)
++    const auto* tab = collection_node_ ? GetTabInterface() : nullptr;
++    const auto* window = tab ? tab->GetBrowserWindowInterface() : nullptr;
++    if (window && !mb::ShouldShowConfiguredTabCloseButtons(
++                      window->GetType() == BrowserWindowInterface::TYPE_NORMAL)) {
++      return false;
++    }
++#endif
+     if (pinned_) {
+       return false;
+     }
+diff --git a/chrome/browser/ui/views/tabs/common/BUILD.gn b/chrome/browser/ui/views/tabs/common/BUILD.gn
+--- a/chrome/browser/ui/views/tabs/common/BUILD.gn
++++ b/chrome/browser/ui/views/tabs/common/BUILD.gn
+@@ -130,6 +130,9 @@
+     "//chrome/browser:browser_public_dependencies",
+     "//chrome/browser/ui/tabs/alert:tab_alert",
+   ]
++  if (is_linux) {
++    deps += [ "//mb:runtime_ui_actions" ]
++  }
+ }
+ 
+ source_set("browser_tests") {
+diff --git a/chrome/browser/ui/startup/startup_browser_creator_impl.cc b/chrome/browser/ui/startup/startup_browser_creator_impl.cc
+--- a/chrome/browser/ui/startup/startup_browser_creator_impl.cc
++++ b/chrome/browser/ui/startup/startup_browser_creator_impl.cc
+@@ -21,6 +21,7 @@
+ #include "build/build_config.h"
+ 
+ #if BUILDFLAG(IS_LINUX)
++#include "mb/browser/runtime_ui_actions.h"
+ #include "mb/browser/runtime_ui_config.h"
+ #endif
+ #include "chrome/browser/apps/platform_apps/install_chrome_app.h"
+@@ -680,6 +681,21 @@
+     StartupTabs prefs_tabs =
+         provider.GetPreferencesTabs(*command_line_, profile_);
+ 
++#if BUILDFLAG(IS_LINUX)
++    // This slot is reached only without explicit URLs, outside OTR/guest and
++    // crash recovery. Preserve native session restore and configured policies.
++    if (process_startup == chrome::startup::IsProcessStartup::kYes &&
++        profile_->IsRegularProfile() && prefs_tabs.empty() &&
++        !StartupBrowserCreator::GetSessionStartupPref(*command_line_, profile_)
++             .ShouldRestoreLastSession() &&
++        !SessionStartupPref::TypeIsManaged(profile_->GetPrefs()) &&
++        !SessionStartupPref::URLsAreManaged(profile_->GetPrefs()) &&
++        !SessionStartupPref::TypeHasRecommendedValue(profile_->GetPrefs())) {
++      for (const auto& url : mb::GetConfiguredStartupUrls()) {
++        prefs_tabs.emplace_back(url);
++      }
++    }
++#endif
+     bool prefs_tabs_originally_empty = prefs_tabs.empty();
+ 
+     // Filter out tabs from preferences that are already pinned.
+diff --git a/chrome/browser/ui/startup/BUILD.gn b/chrome/browser/ui/startup/BUILD.gn
+--- a/chrome/browser/ui/startup/BUILD.gn
++++ b/chrome/browser/ui/startup/BUILD.gn
+@@ -370,6 +370,9 @@
+   }
+   if (is_linux) {
+     deps += [ "//mb:runtime_ui_config" ]
++  }
++  if (is_linux) {
++    deps += [ "//mb:runtime_ui_actions" ]
+   }
+ }
+ 

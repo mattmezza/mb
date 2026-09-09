@@ -596,3 +596,9 @@ keyboard success. Browser desktop smoke `112221.326481Z` remains failed on focus
 
 UI config0010: four PRE_/restart browser cases passed in
 `product-browser-tests-20260909T114210.015824Z`, test build114007.422487Z.
+
+UI actions0011: six of seven native executions passed in114746.050178Z;
+explicit-URL fixture incorrectly used about:blank#explicit, which native launch
+validation excludes. Corrected local-data fixture passed115134.422351Z. Build
+115014.248455Z passed; production rebuild pending. Test compile114441 required
+explicit View* conversion from Chromium raw_ptr children.

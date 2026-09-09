@@ -139,3 +139,9 @@ Restart-only sidebar width/collapse and theme application now passes native
 browser tests, including unchanged-config preservation of user adjustments and
 changed-config application to multiple synchronously restored windows. Additional
 profiles restored asynchronously are not yet covered by this override policy.
+
+`show_tab_close_buttons` and selected-environment `startup_urls` are now wired
+into native Views/startup. These require restart. Explicit valid command-line
+URLs, incognito/guest, crash recovery and native session restoration retain
+precedence; configured URLs are not reinjected into an already-running process.
+Existing native startup URL preferences/policies also retain precedence.
