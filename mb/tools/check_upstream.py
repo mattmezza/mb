@@ -34,6 +34,8 @@ VERSION_RE = re.compile(
 COMMIT_RE = re.compile(r"^[0-9a-f]{40}$")
 DATE_RE = re.compile(r"^[0-9]{4}-[0-9]{2}-[0-9]{2}$")
 MAX_VERSION_COMPONENT = 2**32 - 1
+MAX_JSON_DEPTH = 64
+MAX_JSON_NUMBER_DIGITS = 1000
 DEPOT_TOOLS_REPOSITORY = "https://chromium.googlesource.com/chromium/tools/depot_tools.git"
 
 
@@ -103,6 +105,41 @@ def is_official_metadata_url(url: str) -> bool:
         return False
 
 
+def validate_json_limits(text: str) -> None:
+    """Reject costly JSON nesting and numeric conversion before json.loads."""
+    depth = 0
+    in_string = False
+    escaped = False
+    index = 0
+    while index < len(text):
+        char = text[index]
+        if in_string:
+            if escaped:
+                escaped = False
+            elif char == "\\":
+                escaped = True
+            elif char == '"':
+                in_string = False
+            index += 1
+            continue
+        if char == '"':
+            in_string = True
+        elif char in "[{":
+            depth += 1
+            if depth > MAX_JSON_DEPTH:
+                raise ValueError("JSON metadata nesting exceeds the supported limit")
+        elif char in "]}":
+            depth -= 1
+        elif char == "-" or char.isdigit():
+            end = index + 1
+            while end < len(text) and text[end] not in " \t\r\n,]}:":
+                end += 1
+            if sum(character.isdigit() for character in text[index:end]) > MAX_JSON_NUMBER_DIGITS:
+                raise ValueError("JSON metadata number exceeds the supported limit")
+            index = end - 1
+        index += 1
+
+
 def fetch_json(url: str, opener: Any | None = None) -> Any:
     if not is_official_metadata_url(url):
         raise CheckError("Refusing a non-official metadata endpoint")
@@ -121,6 +158,7 @@ def fetch_json(url: str, opener: Any | None = None) -> Any:
         text = data.decode("utf-8")
         if text.startswith(")]}'\n"):
             text = text[5:]
+        validate_json_limits(text)
         return json.loads(text)
     except (UnicodeDecodeError, ValueError, RecursionError) as error:
         raise CheckError("Metadata response is not valid UTF-8 JSON") from error

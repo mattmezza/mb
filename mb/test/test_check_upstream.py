@@ -1,6 +1,7 @@
 import copy
 from contextlib import redirect_stderr, redirect_stdout
 import io
+import json
 import sys
 import tomllib
 import unittest
@@ -147,6 +148,62 @@ class CandidateCheckTest(unittest.TestCase):
             with self.subTest(length=len(payload)):
                 with self.assertRaises(check_upstream.CheckError):
                     check_upstream.fetch_json(check_upstream.RELEASE_SOURCE, Opener(payload))
+
+    def test_json_limits_allow_brackets_in_strings_and_boundaries(self):
+        class Response:
+            def __init__(self, payload):
+                self.payload = payload
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, exc_type, exc_value, traceback):
+                return False
+
+            def geturl(self):
+                return check_upstream.RELEASE_SOURCE
+
+            def read(self, limit):
+                return self.payload
+
+        class Opener:
+            def __init__(self, payload):
+                self.payload = payload
+
+            def open(self, request, timeout):
+                return Response(self.payload)
+
+        string_payload = b'{"text":"' + (b"[{}]" * 1000) + b'"}'
+        parsed = check_upstream.fetch_json(
+            check_upstream.RELEASE_SOURCE, Opener(string_payload))
+        self.assertEqual(parsed["text"], "[{}]" * 1000)
+
+        quoted = {'text': '\\"' + ('[{"}]' * 1000) + '\\'}
+        self.assertEqual(
+            check_upstream.fetch_json(
+                check_upstream.RELEASE_SOURCE,
+                Opener(json.dumps(quoted).encode())),
+            quoted,
+        )
+
+        balanced = b"[" * check_upstream.MAX_JSON_DEPTH + b"]" * check_upstream.MAX_JSON_DEPTH
+        parsed = check_upstream.fetch_json(
+            check_upstream.RELEASE_SOURCE, Opener(balanced))
+        for _ in range(check_upstream.MAX_JSON_DEPTH - 1):
+            parsed = parsed[0]
+        self.assertEqual(parsed, [])
+        too_deep = b"[" * (check_upstream.MAX_JSON_DEPTH + 1) + b"]" * (check_upstream.MAX_JSON_DEPTH + 1)
+        with self.assertRaises(check_upstream.CheckError):
+            check_upstream.fetch_json(check_upstream.RELEASE_SOURCE, Opener(too_deep))
+
+        bounded_number = b"9" * check_upstream.MAX_JSON_NUMBER_DIGITS
+        self.assertEqual(
+            check_upstream.fetch_json(check_upstream.RELEASE_SOURCE, Opener(bounded_number)),
+            int(bounded_number),
+        )
+        too_many_digits = b"9" * (check_upstream.MAX_JSON_NUMBER_DIGITS + 1)
+        with self.assertRaises(check_upstream.CheckError):
+            check_upstream.fetch_json(check_upstream.RELEASE_SOURCE, Opener(too_many_digits))
 
     def test_compare_and_emitted_toml_distinguish_candidate_from_installed(self):
         installed, depot = check_upstream.validate_installed_pin(installed_pin())
