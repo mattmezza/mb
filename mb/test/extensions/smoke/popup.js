@@ -3,6 +3,12 @@
 const stateElement = document.querySelector("#state");
 const resultElement = document.querySelector("#result");
 
+function notifyTest(message) {
+  if (chrome.test?.sendMessage) {
+    chrome.test.sendMessage(message);
+  }
+}
+
 function showResult(response) {
   resultElement.textContent = response?.ok
     ? "Service worker response: success."
@@ -24,6 +30,7 @@ function showState(response) {
     `Local popup ping count: ${value.popupPingCount}.`,
     `Local fixture value: ${value.fixtureValue}.`,
   ].join(" ");
+  notifyTest(`popup:state:${value.contentContextCount}:${value.fixtureValue}`);
 }
 
 function message(request, callback) {
@@ -35,13 +42,23 @@ function message(request, callback) {
 document.querySelector("#ping").addEventListener("click", () => {
   message({type: "fixture:popup-ping"}, (response) => {
     showResult(response);
-    message({type: "fixture:get-state"}, showState);
+    message({type: "fixture:get-state"}, (state) => {
+      showState(state);
+      if (state?.ok) {
+        notifyTest(`popup:ping:${state.state.popupPingCount}`);
+      }
+    });
   });
 });
 document.querySelector("#save").addEventListener("click", () => {
   message({type: "fixture:save-value"}, (response) => {
     showResult(response);
-    message({type: "fixture:get-state"}, showState);
+    message({type: "fixture:get-state"}, (state) => {
+      showState(state);
+      if (state?.ok) {
+        notifyTest("popup:saved");
+      }
+    });
   });
 });
 message({type: "fixture:get-state"}, showState);

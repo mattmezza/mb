@@ -604,3 +604,5 @@ validation excludes. Corrected local-data fixture passed115134.422351Z. Build
 explicit View* conversion from Chromium raw_ptr children.
 
 Default XDG checkpoint:73 native +17 companion checks passed115635.362056Z; production115742.544580Z passed. Executable smoke default-config-_82bbob9 verified bootstrap, XDG roots, remembered activation and unchanged selection through private shutdown. Eight configuration negatives passed115834.843829Z. Initial unit tests encountered /tmp quota; their runner now supplies build scratch storage.
+
+MV3 capability and OTR persistence: five browser tests passed in product-browser-tests-20260909T120355.588766Z, build120248.074755Z. Covers unpacked lifecycle, native action popup, service worker/content-script/storage round trips, last-private-window cookie loss and absence of private visits from normal history. Does not yet prove cross-environment persistence or private session-file contents.

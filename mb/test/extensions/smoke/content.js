@@ -1,5 +1,11 @@
 "use strict";
 
+function notifyTest(message) {
+  if (chrome.test?.sendMessage) {
+    chrome.test.sendMessage(message);
+  }
+}
+
 (() => {
   const status = document.createElement("aside");
   status.id = "browser-capability-fixture-status";
@@ -19,5 +25,6 @@
     }
     const mode = response.incognito ? "incognito" : "regular";
     status.textContent = `Browser capability fixture: ${mode} context; service worker responded; local count ${response.contentContextCount}.`;
+    notifyTest(`content:${response.contentContextCount}`);
   });
 })();

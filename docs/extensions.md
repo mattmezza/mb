@@ -79,3 +79,5 @@ establish that extension updates work; updates need their own observation.
   not replace verification of the pinned browser's current install paths.
 - [Manifest V3 Hello World](https://developer.chrome.com/docs/extensions/get-started/tutorial/hello-world)
   documents the Developer mode/Load unpacked workflow used by the local fixture.
+
+Verified MV3 checkpoint: unpacked fixture load, chrome://extensions, enable/disable/removal, native toolbar popup, service worker messaging, content scripts and storage passed three native browser tests on2026-09-09. Cross-environment persistence and extension-incognito permissions remain pending; complete extension compatibility is not claimed.
