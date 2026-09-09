@@ -68,3 +68,6 @@ pins, OTR, session restoration and existing-process behavior passed114746;
 corrected explicit-URL fixture passed115134.422351Z. Production rebuild pending.
 
 Production build115205.086172Z passed for0011. Next: default XDG config/state.
+
+Default XDG helper/gate integrated; native compilation pending. Earlier staging
+script stopped at a test formatting mismatch; complete GN/test additions now in root.

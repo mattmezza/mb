@@ -136,6 +136,83 @@ TEST(BrowserConfigGateTest, RawTomlDescriptionDoesNotLeakInputValues) {
   EXPECT_EQ(diagnostic.find("private.invalid"), std::string::npos);
 }
 
+TEST(BrowserConfigGateTest, NativeNoConfigUserDataDirBypassesXdg) {
+  base::ScopedTempDir directory;
+  ASSERT_TRUE(directory.CreateUniqueTempDir());
+  const base::FilePath home = directory.GetPath().AppendASCII("home");
+  ASSERT_TRUE(base::CreateDirectory(home));
+  const base::FilePath config = directory.GetPath().AppendASCII("xdg-config");
+  const base::FilePath state = directory.GetPath().AppendASCII("xdg-state");
+  const base::FilePath data = directory.GetPath().AppendASCII("xdg-data");
+  const base::FilePath native = directory.GetPath().AppendASCII("native");
+  base::ScopedEnvironmentVariableOverride home_override("HOME", home.value());
+  base::ScopedEnvironmentVariableOverride config_override("XDG_CONFIG_HOME",
+                                                          config.value());
+  base::ScopedEnvironmentVariableOverride state_override("XDG_STATE_HOME",
+                                                         state.value());
+  base::ScopedEnvironmentVariableOverride data_override("XDG_DATA_HOME",
+                                                        data.value());
+  base::ScopedEnvironmentVariableOverride root_override("CHROME_USER_DATA_DIR");
+  ASSERT_TRUE(home_override.IsOverridden());
+  ASSERT_TRUE(config_override.IsOverridden());
+  ASSERT_TRUE(state_override.IsOverridden());
+  ASSERT_TRUE(data_override.IsOverridden());
+  ASSERT_TRUE(root_override.IsOverridden());
+  base::test::ScopedCommandLine command_line;
+  *command_line.GetProcessCommandLine() =
+      base::CommandLine(base::CommandLine::NO_PROGRAM);
+  command_line.GetProcessCommandLine()->AppendSwitchPath("user-data-dir",
+                                                         native);
+
+  ASSERT_EQ(GetProcessRuntimeConfig(), nullptr);
+  EXPECT_EQ(InitializeExplicitBrowserConfig(), std::nullopt);
+  EXPECT_FALSE(base::PathExists(config));
+  EXPECT_FALSE(base::PathExists(state));
+  EXPECT_FALSE(base::PathExists(data));
+  EXPECT_FALSE(base::PathExists(native));
+  EXPECT_EQ(GetProcessRuntimeConfig(), nullptr);
+}
+
+TEST(BrowserConfigGateTest, SelectorPreventsNativeNoConfigBypass) {
+  base::ScopedTempDir directory;
+  ASSERT_TRUE(directory.CreateUniqueTempDir());
+  const base::FilePath home = directory.GetPath().AppendASCII("home");
+  ASSERT_TRUE(base::CreateDirectory(home));
+  const base::FilePath config = directory.GetPath().AppendASCII("xdg-config");
+  const base::FilePath state = directory.GetPath().AppendASCII("xdg-state");
+  const base::FilePath data = directory.GetPath().AppendASCII("xdg-data");
+  const base::FilePath native = directory.GetPath().AppendASCII("native");
+  base::ScopedEnvironmentVariableOverride home_override("HOME", home.value());
+  base::ScopedEnvironmentVariableOverride config_override("XDG_CONFIG_HOME",
+                                                          config.value());
+  base::ScopedEnvironmentVariableOverride state_override("XDG_STATE_HOME",
+                                                         state.value());
+  base::ScopedEnvironmentVariableOverride data_override("XDG_DATA_HOME",
+                                                        data.value());
+  base::ScopedEnvironmentVariableOverride root_override("CHROME_USER_DATA_DIR");
+  ASSERT_TRUE(home_override.IsOverridden());
+  ASSERT_TRUE(config_override.IsOverridden());
+  ASSERT_TRUE(state_override.IsOverridden());
+  ASSERT_TRUE(data_override.IsOverridden());
+  ASSERT_TRUE(root_override.IsOverridden());
+  base::test::ScopedCommandLine command_line;
+  *command_line.GetProcessCommandLine() =
+      base::CommandLine(base::CommandLine::NO_PROGRAM);
+  command_line.GetProcessCommandLine()->AppendSwitchASCII("environment", "work");
+  command_line.GetProcessCommandLine()->AppendSwitchPath("user-data-dir",
+                                                         native);
+
+  ASSERT_EQ(GetProcessRuntimeConfig(), nullptr);
+  EXPECT_EQ(InitializeExplicitBrowserConfig(),
+            std::optional<int>(CHROME_RESULT_CODE_UNSUPPORTED_PARAM));
+  EXPECT_TRUE(base::PathExists(config));
+  EXPECT_FALSE(base::PathExists(native));
+  EXPECT_EQ(
+      command_line.GetProcessCommandLine()->GetSwitchValuePath("user-data-dir"),
+      native);
+  EXPECT_EQ(GetProcessRuntimeConfig(), nullptr);
+}
+
 TEST(BrowserConfigGateTest, InvalidUnselectedUrlFailsBeforeSelectedRootCreation) {
   base::ScopedTempDir directory;
   ASSERT_TRUE(directory.CreateUniqueTempDir());

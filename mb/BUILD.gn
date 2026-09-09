@@ -83,6 +83,11 @@ if (is_linux) {
     public_deps = [ ":product_core", "//base" ]
     deps = [ "//chrome/common", "//components/prefs" ]
   }
+  source_set("user_config_state") {
+    sources = [ "browser/user_config_state.cc", "browser/user_config_state.h" ]
+    public = [ "browser/user_config_state.h" ]
+    public_deps = [ ":product_core" ]
+  }
   component("browser_config_gate") {
     sources = [
       "browser/browser_config_gate.cc",
@@ -95,7 +100,7 @@ if (is_linux) {
     ]
     defines = [ "IS_MB_BROWSER_CONFIG_IMPL=1" ]
     public_deps = [ ":product_core", "//base" ]
-    deps = [ "//chrome/common", "//url" ]
+    deps = [ ":branding", ":user_config_state", "//chrome/common", "//url" ]
   }
 
   source_set("chrome_startup_arguments") {
@@ -136,8 +141,8 @@ source_set("unit_tests") {
     "//testing/gtest",
   ]
   if (is_linux) {
-    sources += [ "test/chrome_startup_arguments_test.cc", "test/browser_config_gate_test.cc" ]
-    deps += [ ":chrome_startup_arguments", ":browser_config_gate", "//base/test:test_support", "//chrome/common", "//url" ]
+    sources += [ "test/chrome_startup_arguments_test.cc", "test/browser_config_gate_test.cc", "test/user_config_state_test.cc" ]
+    deps += [ ":user_config_state", ":chrome_startup_arguments", ":browser_config_gate", "//base/test:test_support", "//chrome/common", "//url" ]
   }
 
 }

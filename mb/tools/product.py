@@ -506,7 +506,8 @@ def run_tests(profile):
     (BUILD / 'control').mkdir(exist_ok=True)
     env = dict(os.environ, TMPDIR=str(scratch),
                MB_ENVIRONMENT_TEST_TMPDIR=str(scratch),
-               MB_RUNTIME_CONFIG_TEST_TMPDIR=str(scratch))
+               MB_RUNTIME_CONFIG_TEST_TMPDIR=str(scratch),
+               MB_USER_CONFIG_STATE_TEST_TMPDIR=str(scratch))
     binary = profile['output'] / 'mb_unit_tests'
     companion = profile['output'] / (receipt['product']['executable_name'] + 'ctl')
     commands = [

@@ -16,6 +16,8 @@
 #include "chrome/common/chrome_switches.h"
 #include "mb/browser/browser_config_gate_internal.h"
 #include "mb/browser/environment_paths.h"
+#include "mb/browser/user_config_state.h"
+#include "mb/generated/branding/branding.h"
 #include "url/third_party/mozilla/url_parse.h"
 #include "url/url_canon.h"
 #include "url/url_canon_stdstring.h"
@@ -61,8 +63,8 @@ std::string FormatDiagnostic(std::string_view filename,
                              std::string_view reason,
                              size_t line,
                              int system_errno) {
-  std::string result =
-      "configuration " + QuoteDiagnostic(filename) + ": " + QuoteDiagnostic(key);
+  std::string result = "configuration " + QuoteDiagnostic(filename) + ": " +
+                       QuoteDiagnostic(key);
   if (line) {
     result += " (line " + std::to_string(line) + ')';
   }
@@ -99,7 +101,7 @@ std::string_view RuntimeIssueReason(const config::RuntimeConfigIssue& issue) {
     case config::RuntimeConfigIssueCode::kUnknownExplicitEnvironment:
       return "explicit environment is not configured";
     case config::RuntimeConfigIssueCode::kStaleRememberedEnvironment:
-      return "remembered environment is not configured";
+      return issue.message;
     case config::RuntimeConfigIssueCode::kInternalSelection:
       return "configured environment could not be selected";
   }
@@ -174,31 +176,33 @@ std::optional<int> InitializeExplicitBrowserConfig() {
     return std::nullopt;
   }
 
-  const std::string filename = command_line.GetSwitchValueNative("config");
+  const bool has_explicit_config = command_line.HasSwitch("config");
+  std::string filename = command_line.GetSwitchValueNative("config");
   auto environment = base::Environment::Create();
   const auto root_override = environment->GetVar("CHROME_USER_DATA_DIR");
   if (root_override && !root_override->empty()) {
     return Fail(filename, "CHROME_USER_DATA_DIR",
                 "user-data directory environment override is not supported");
   }
-  if (!command_line.HasSwitch("config")) {
-    if (command_line.HasSwitch("environment")) {
-      return Fail("<command-line>", "--environment",
-                  "explicit environment requires --config in this integration");
-    }
-    // Deliberately incomplete: default config/environment lifecycle is not
-    // implemented. This branch retains native startup with no product context.
+
+  // Native --user-data-dir is an intentional opt-out from product default
+  // discovery. Do not create XDG config, state, or an environment root.
+  if (!has_explicit_config && !command_line.HasSwitch("environment") &&
+      command_line.HasSwitch(switches::kUserDataDir)) {
     return std::nullopt;
   }
   if (Storage()) {
     return Fail(filename, "--config",
                 "process configuration was already initialized");
   }
-  if (filename.empty() ||
-      base::TrimWhitespaceASCII(filename, base::TRIM_ALL) != filename) {
-    return Fail(filename, "--config",
-                "configuration filename must be nonempty without boundary whitespace");
+  if (has_explicit_config &&
+      (filename.empty() ||
+       base::TrimWhitespaceASCII(filename, base::TRIM_ALL) != filename)) {
+    return Fail(
+        filename, "--config",
+        "configuration filename must be nonempty without boundary whitespace");
   }
+
   std::optional<std::string> selected;
   if (command_line.HasSwitch("environment")) {
     selected = command_line.GetSwitchValueNative("environment");
@@ -213,12 +217,49 @@ std::optional<int> InitializeExplicitBrowserConfig() {
     return Fail(filename, "HOME", "an absolute home directory is required");
   }
 
-  auto loaded = config::LoadRuntimeConfig(filename, *home, selected);
+  // State is deliberately local to the discovered default config lifecycle.
+  // Explicit --config stays fully explicit and never creates or consumes XDG
+  // state as a side effect.
+  std::optional<UserConfigPaths> local_paths;
+  std::optional<std::string> remembered;
+  if (!has_explicit_config) {
+    UserConfigPaths paths;
+    UserConfigStateError state_error;
+    if (!ResolveUserConfigPaths(*home, environment->GetVar("XDG_CONFIG_HOME"),
+                                environment->GetVar("XDG_STATE_HOME"),
+                                environment->GetVar("XDG_DATA_HOME"),
+                                branding::kProfileDirectoryName, &paths,
+                                &state_error)) {
+      return Fail("<xdg>", state_error.key, state_error.message, 0,
+                  state_error.system_errno);
+    }
+    bool created = false;
+    if (!EnsureDefaultConfig(paths, *home, &created, &state_error)) {
+      return Fail(paths.config_file, state_error.key, state_error.message, 0,
+                  state_error.system_errno);
+    }
+    filename = paths.config_file;
+    (void)created;  // The template is parsed and validated below.
+    if (!ReadRememberedEnvironment(paths, *home, &remembered, &state_error)) {
+      std::cerr << FormatDiagnostic(paths.state_file, state_error.key,
+                                    state_error.message, 0,
+                                    state_error.system_errno)
+                << '\n';
+      remembered.reset();
+    }
+    local_paths = std::move(paths);
+  }
+
+  auto loaded =
+      config::LoadRuntimeConfig(filename, *home, selected, remembered);
   if (!loaded.ok()) {
     for (const auto& issue : loaded.errors) {
       std::cerr << internal::FormatRuntimeConfigIssue(issue) << '\n';
     }
     return CHROME_RESULT_CODE_UNSUPPORTED_PARAM;
+  }
+  for (const auto& warning : loaded.warnings) {
+    std::cerr << internal::FormatRuntimeConfigIssue(warning) << '\n';
   }
   auto& snapshot = *loaded.snapshot;
 
@@ -236,14 +277,16 @@ std::optional<int> InitializeExplicitBrowserConfig() {
   }
 
   if (command_line.HasSwitch(switches::kUserDataDir)) {
-    const auto supplied = command_line.GetSwitchValuePath(switches::kUserDataDir);
+    const auto supplied =
+        command_line.GetSwitchValuePath(switches::kUserDataDir);
     if (!supplied.IsAbsolute()) {
       return Fail(snapshot.config_filename, "--user-data-dir",
                   "native user-data directory must be absolute");
     }
     if (!internal::NativeRootMatches(snapshot, *home, supplied)) {
-      return Fail(snapshot.config_filename, "--user-data-dir",
-                  "native user-data directory must resolve to the selected root");
+      return Fail(
+          snapshot.config_filename, "--user-data-dir",
+          "native user-data directory must resolve to the selected root");
     }
   }
 
@@ -262,7 +305,22 @@ std::optional<int> InitializeExplicitBrowserConfig() {
                                 base::FilePath(snapshot.selected_root));
   Storage() = std::make_unique<const InstalledConfig>(
       InstalledConfig{std::move(snapshot), std::move(prepared)});
+
+  // Incognito uses the selected root but never records it as the next normal
+  // browser selection. State-write failures remain nonfatal after successful
+  // startup and are surfaced as bounded diagnostics.
+  if (local_paths && !command_line.HasSwitch(switches::kIncognito) &&
+      Storage()->snapshot.config.app.restore_last_environment) {
+    UserConfigStateError state_error;
+    if (!WriteRememberedEnvironment(*local_paths, *home,
+                                    Storage()->snapshot.selected_environment,
+                                    &state_error)) {
+      std::cerr << FormatDiagnostic(local_paths->state_file, state_error.key,
+                                    state_error.message, 0,
+                                    state_error.system_errno)
+                << '\n';
+    }
+  }
   return std::nullopt;
 }
-
 }  // namespace mb
