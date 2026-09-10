@@ -165,6 +165,7 @@ test("mb_browser_tests") {
     "test/bulk_startup_data_browsertest.cc",
     "test/devtools_browsertest.cc",
     "test/extensions_capability_browsertest.cc",
+    "test/environment_isolation_browsertest.cc",
     "test/incognito_persistence_browsertest.cc",
     "test/sidebar_accessibility_browsertest.cc",
     "test/sidebar_scale_browsertest.cc",
