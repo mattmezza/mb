@@ -1,0 +1,41 @@
+diff --git a/chrome/BUILD.gn b/chrome/BUILD.gn
+index eca74273b2..0b2e0840aa 100644
+--- a/chrome/BUILD.gn
++++ b/chrome/BUILD.gn
+@@ -1759,7 +1759,7 @@ if (is_linux || is_chromeos) {
+       ]
+     }
+     extract_symbols("chrome_symbols") {
+-      binary = "$root_out_dir/chrome"
++      binary = "$root_out_dir/$_chrome_output_name"
+ 
+       if (current_cpu == "x86") {
+         # GYP used "ia32" so keep that naming for back-compat.
+diff --git a/chrome/installer/linux/BUILD.gn b/chrome/installer/linux/BUILD.gn
+index 4c4d7438a9..b6441214ed 100644
+--- a/chrome/installer/linux/BUILD.gn
++++ b/chrome/installer/linux/BUILD.gn
+@@ -17,5 +17,6 @@ import("//third_party/widevine/cdm/widevine.gni")
+ import("//ui/gl/features.gni")
+ import("//ui/qt/qt.gni")
++import("//mb/generated/branding/branding.gni")
+ 
+ if (bundle_widevine_cdm) {
+   import("//media/cdm/library_cdm/cdm_paths.gni")
+@@ -60,7 +61,7 @@ if (current_cpu == "x86") {
+ }
+ 
+ packaging_files_executables = [
+-  "$root_out_dir/chrome",
++  "$root_out_dir/$branding_executable_name",
+   "$root_out_dir/chrome_crashpad_handler",
+   "$root_out_dir/chrome_management_service",
+   "$root_out_dir/chrome_sandbox",
+@@ -199,6 +200,6 @@ action("merge_rpm_dependencies") {
+ }
+ 
+ strip_binary("strip_chrome_binary") {
+-  binary_input = "$root_out_dir/chrome"
++  binary_input = "$root_out_dir/$branding_executable_name"
+   deps = [ "//chrome" ]
+ }
