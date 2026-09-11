@@ -38,13 +38,16 @@ class StageReleaseTest(unittest.TestCase):
             "chrome_management_service", "resources.pak", "icudtl.dat",
             "chrome_100_percent.pak", "chrome_200_percent.pak",
             "v8_context_snapshot.bin", "libvulkan.so.1",
-            "libvk_swiftshader.so", "vk_swiftshader_icd.json", "credits.html",
+            "libvk_swiftshader.so", "vk_swiftshader_icd.json",
         )
         for name in required:
             path = output / name
             path.write_bytes(name.encode())
             path.chmod(0o755)
         (output / "locales/en-US.pak").write_bytes(b"locale")
+        credits = output / "gen/components/resources/about_credits.html"
+        credits.parent.mkdir(parents=True)
+        credits.write_text("credits")
         args = "is_debug = false\n"
         (output / "args.gn").write_text(args)
         (root / "LICENSE").write_text("license")
@@ -118,7 +121,8 @@ class StageReleaseTest(unittest.TestCase):
             output, unused, unused_fake = self.fixture(root)
             (output / "libvk_swiftshader.so").unlink()
             with self.assertRaisesRegex(RuntimeError, "libvk_swiftshader"):
-                STAGE.payload(output, root, STAGE.load_manifest(root / "mb/branding.toml"), {
+                STAGE.payload(output, root / "LICENSE",
+                              STAGE.load_manifest(root / "mb/branding.toml"), {
                     "use_static_angle": True,
                     "angle_shared_libvulkan": True,
                     "enable_swiftshader": True,

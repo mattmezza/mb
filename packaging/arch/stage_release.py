@@ -100,7 +100,7 @@ def add_file(files, source: Path, relative: str, mode: int, *, optional=False):
         fail(f"required release payload is missing: {source}")
 
 
-def payload(output: Path, repo_root: Path, manifest: dict[str, str],
+def payload(output: Path, upstream_license: Path, manifest: dict[str, str],
             args: dict[str, bool]):
     files = []
     add_file(files, output / manifest["executable_name"],
@@ -150,8 +150,9 @@ def payload(output: Path, repo_root: Path, manifest: dict[str, str],
         if (output / directory).is_dir():
             for name in names:
                 add_file(files, output / directory / name, f"{directory}/{name}", 0o644)
-    add_file(files, repo_root / "LICENSE", "LICENSE", 0o644)
-    add_file(files, output / "credits.html", "credits.html", 0o644)
+    add_file(files, upstream_license, "LICENSE", 0o644)
+    add_file(files, output / "gen/components/resources/about_credits.html",
+             "credits.html", 0o644)
     return files
 
 
@@ -160,7 +161,8 @@ def stage(repo_root: Path, output: Path, receipt_path: Path, destination: Path):
     receipt, product = validate_receipt(repo_root, output, receipt_path, manifest)
     args = resolved_args(product, output)
     install_root = destination / "opt" / manifest["profile_directory_name"]
-    for source, relative, mode in payload(output, repo_root, manifest, args):
+    for source, relative, mode in payload(
+            output, product.SOURCE / "LICENSE", manifest, args):
         if relative.is_absolute() or ".." in relative.parts:
             fail(f"unsafe staging destination: {relative}")
         target = install_root / relative
@@ -175,6 +177,9 @@ def stage(repo_root: Path, output: Path, receipt_path: Path, destination: Path):
     icons = repo_root / ".build/generated/branding-assets/unscaled"
     for size in ICON_SIZES:
         source = icons / f"product_logo_{size}.png"
+        if not source.is_file() and size == 32:
+            source = (repo_root / ".build/generated/branding-assets/default_100_percent"
+                      / "product_logo_32.png")
         if not source.is_file():
             fail(f"generated icon is missing: {source}")
         target = destination / f"usr/share/icons/hicolor/{size}x{size}/apps/{manifest['short_name']}.png"
