@@ -213,7 +213,8 @@ If the installed `makepkg` does not support `--dir`, run the same command from
 are root-owned and `opt/mb/chrome-sandbox` has mode 4755. Installing it requires
 root privileges; use package replacement for updates.
 
-The archive has been built and inspected without root. A final installed-package
-launch must still confirm the root ownership/setuid sandbox behavior on the
-target machine. Do not bypass a missing or misconfigured sandbox with
-`--no-sandbox`. See [upstream maintenance](upstream-updates.md) for updates.
+The package was installed with Pacman on 2026-09-11. Pacman reported 288 files
+with none missing; the installed sandbox was root-owned mode 4755. `/usr/bin/mb`
+opened under X11, its renderer/network/storage children used the native Linux
+sandbox, and it exited cleanly. No `--no-sandbox` flag was used. See
+[upstream maintenance](upstream-updates.md) for updates.

@@ -1,7 +1,7 @@
 # Implementation status
 
 Updated 2026-09-11, Europe/Zurich. Current phase: 6; daily-driver alpha pending
-installed-package and physical desktop verification.
+physical desktop verification and the final maintenance rehearsal.
 
 ## Verified
 
@@ -23,15 +23,19 @@ installed-package and physical desktop verification.
   `.build/packages/mb-browser-0.1.0-1-x86_64.pkg.tar.zst`.
 - Package SHA-256:
   `3fb8cd96d5ad74b0abed297032019a602cb28d0e186e691f30e32bd26ea2e6c7`.
+- Pacman reports 288 installed files with none missing. `/opt/mb/mb` matches the
+  tested release hash and `/opt/mb/chrome-sandbox` is root:root mode 4755.
+- The installed `/usr/bin/mb` opened under X11 and exited cleanly. Renderer,
+  network and storage children had `NoNewPrivs=1` and Seccomp mode 2:
+  `.build/test-evidence/installed-package-J1JYhtGf`.
 
 ## Pending
 
-1. Install the local Arch package and launch it under X11 with the sandbox enabled.
-2. Complete physical checks for clipboard, IME, file picker, downloads,
+1. Complete physical checks for clipboard, IME, file picker, downloads,
    notifications, media, HiDPI/multiple monitors and default-browser invocation.
-3. Manually check bookmarks, permissions, passwords, session restoration,
+2. Manually check bookmarks, permissions, passwords, session restoration,
    extension incognito permission UI and the main DevTools panels.
-4. Finish the upstream-update rehearsal and final acceptance report.
+3. Finish the upstream-update rehearsal and final acceptance report.
 
 ## Limits
 
@@ -43,9 +47,5 @@ installed-package and physical desktop verification.
 
 ## Continue
 
-The remaining automated work is documentation/update validation. Installing the
-package is the next privileged step:
-
-```sh
-sudo pacman -U /home/matteo/dev/mb/.build/packages/mb-browser-0.1.0-1-x86_64.pkg.tar.zst
-```
+Run `mb --environment personal` for the physical desktop checklist. The
+remaining automated work is documentation and upstream-update validation.

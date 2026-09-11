@@ -632,5 +632,12 @@ build dependencies and produced
 `3fb8cd96d5ad74b0abed297032019a602cb28d0e186e691f30e32bd26ea2e6c7`.
 Archive inspection found 257 payload files, root ownership metadata and mode
 4755 for `opt/mb/chrome-sandbox`; extracting the packaged browser yields the
-same hash as the tested release executable. System installation and its
-root-owned sandbox launch remain pending.
+same hash as the tested release executable.
+
+After Pacman installation, `pacman -Qk mb-browser` reported 288 files and none
+missing. `/opt/mb/mb` retained the tested binary hash and the installed sandbox
+was root:root mode 4755. `/usr/bin/mb` opened an X11 window from a disposable
+profile and exited 0 through native session ending. Renderer, network and
+storage children reported `NoNewPrivs: 1` and Seccomp mode 2, while the browser
+command line contained no sandbox-disabling flag. Evidence:
+`installed-package-J1JYhtGf`.

@@ -1,17 +1,15 @@
 # Known limitations
 
-Updated 2026-09-11. The optimized browser and Arch package now build, and the
-release binary has passed explicit two-environment and default-XDG lifecycle
-smoke tests under Xorg. Daily-driver alpha acceptance remains incomplete until
-the installed package and the remaining physical desktop checks pass.
+Updated 2026-09-11. The optimized browser and Arch package build, and the
+installed release has passed sandboxed Xorg startup. Daily-driver alpha
+acceptance remains incomplete until the remaining physical desktop checks pass.
 
 ## Distribution and platform
 
 - Arch Linux x86-64 under Xorg is the only tested target. Wayland, Windows,
   macOS and mobile platforms are outside the first release.
-- The Arch archive is built and inspected, including root ownership metadata and
-  mode 4755 for `chrome-sandbox`. It has not yet been installed system-wide, so
-  the installed setuid fallback has not been exercised.
+- The installed Arch package passes file-integrity, ownership, setuid-sandbox,
+  X11 launch and clean-shutdown checks on the target machine.
 - Updates use package replacement. There is no automatic updater.
 - The active X11 window manager has repeatedly defeated synthetic focus and
   close events. Clipboard, IME, file picker, HiDPI and multi-monitor behavior

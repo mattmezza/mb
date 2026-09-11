@@ -8,6 +8,8 @@
   and extension storage, plus genuine off-the-record persistence behavior.
 - Add and test receipt-bound Arch packaging with generated branding, complete
   locales/resources, upstream credits and the mode-4755 sandbox helper.
+- Install the Arch package and verify Pacman integrity, root-owned sandbox
+  permissions, sandboxed X11 startup and clean shutdown.
 
 - Record Arch/Xorg discovery and phased implementation gates.
 - Pin Chromium Linux stable 152.0.7977.82 and depot_tools by commit.
