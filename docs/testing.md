@@ -641,3 +641,13 @@ profile and exited 0 through native session ending. Renderer, network and
 storage children reported `NoNewPrivs: 1` and Seccomp mode 2, while the browser
 command line contained no sandbox-disabling flag. Evidence:
 `installed-package-J1JYhtGf`.
+
+The final standalone rerun passed every selected suite in
+`standalone-20260911T130750.905118Z`. An earlier run at `130727.398795Z` used an
+unnecessary checkout-local `TMPDIR`; that made the test's deliberately nested
+synthetic singleton path exceed Linux's socket length and is retained as failed
+harness evidence. Removing that override produced the passing intended run.
+
+The read-only stable-candidate check on the same date resolved Chromium
+153.0.8010.36 at `507c6ee3e2f3b2ca0e660547e5b9ea4820c67f4c`. It did not
+change the supported pin or claim that the candidate builds.

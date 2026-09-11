@@ -1,7 +1,7 @@
 # Implementation status
 
 Updated 2026-09-11, Europe/Zurich. Current phase: 6; daily-driver alpha pending
-physical desktop verification and the final maintenance rehearsal.
+physical desktop verification.
 
 ## Verified
 
@@ -28,6 +28,10 @@ physical desktop verification and the final maintenance rehearsal.
 - The installed `/usr/bin/mb` opened under X11 and exited cleanly. Renderer,
   network and storage children had `NoNewPrivs=1` and Seccomp mode 2:
   `.build/test-evidence/installed-package-J1JYhtGf`.
+- All standalone product/tooling suites passed in
+  `.build/test-evidence/standalone-20260911T130750.905118Z`.
+- The read-only update check verified Chromium 153.0.8010.36 as a newer Linux
+  Stable candidate without changing the pinned alpha baseline.
 
 ## Pending
 
@@ -35,7 +39,7 @@ physical desktop verification and the final maintenance rehearsal.
    notifications, media, HiDPI/multiple monitors and default-browser invocation.
 2. Manually check bookmarks, permissions, passwords, session restoration,
    extension incognito permission UI and the main DevTools panels.
-3. Finish the upstream-update rehearsal and final acceptance report.
+3. Record the physical results and finish the acceptance report.
 
 ## Limits
 

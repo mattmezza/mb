@@ -88,16 +88,16 @@ between old and new versions.
    focused browser tests and environment/incognito/capability checks. Complete
    a release build and installed Arch-package smoke test before changing the
    supported version. Use `product.py prepare`, `gen`, `test`, and `build` as documented in
-   [product integration](product-integration.md). Packaging commands remain pending.
+   [product integration](product-integration.md), then build the checked-in
+   `packaging/arch/PKGBUILD` as described in the Arch build guide.
 
 ## Reviewing integration conflicts
 
 Product code belongs under `//mb/`; changes to upstream files must have an
-enumerated purpose and an integration record. The initial branding patch is
-`mb/patches/0001-product-branding.patch`, applied by the guarded product workflow.
-It has passed GN and focused product tests; its browser build is still underway.
-There is no unattended rebase command. A passing standalone test does not prove
-that the browser integration has been ported.
+enumerated purpose and an integration record. The patches under `mb/patches/`
+are applied by the guarded product workflow and pass the pinned release build
+and focused tests. There is no unattended rebase command. A passing standalone
+test does not prove that the browser integration has been ported.
 
 For each affected upstream file, compare the old and candidate versions before
 reapplying the product change. Identify renamed classes, moved initialization
@@ -133,3 +133,12 @@ with the source/product revisions, package checksum, test environment and known
 limitations recorded. Retaining an older package helps reproduce regressions;
 it does not make downgrading a migrated user-data root safe. Restore a suitable
 backup or use a fresh root when testing an older executable.
+
+## Latest read-only rehearsal
+
+On 2026-09-11, `check_upstream.py` resolved and verified Linux Stable candidate
+153.0.8010.36 at commit `507c6ee3e2f3b2ca0e660547e5b9ea4820c67f4c` on
+`refs/branch-heads/8010`. The installed pin was left unchanged. The candidate is
+newer than the 152.0.7977.82 alpha baseline and should be the first update after
+the physical alpha checks. Its DEPS, toolchain, patches, build and runtime have
+not been validated, so the candidate is not yet a supported mb version.

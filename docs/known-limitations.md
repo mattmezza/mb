@@ -11,6 +11,9 @@ acceptance remains incomplete until the remaining physical desktop checks pass.
 - The installed Arch package passes file-integrity, ownership, setuid-sandbox,
   X11 launch and clean-shutdown checks on the target machine.
 - Updates use package replacement. There is no automatic updater.
+- Linux Stable 153.0.8010.36 became available after the alpha baseline was
+  selected. It is the recorded next update candidate but is not yet built or
+  supported by mb.
 - The active X11 window manager has repeatedly defeated synthetic focus and
   close events. Clipboard, IME, file picker, HiDPI and multi-monitor behavior
   therefore require a short physical-input pass.
