@@ -1,0 +1,133 @@
+diff --git a/chrome/browser/ui/views/frame/browser_view.cc b/chrome/browser/ui/views/frame/browser_view.cc
+--- a/chrome/browser/ui/views/frame/browser_view.cc
++++ b/chrome/browser/ui/views/frame/browser_view.cc
+@@ -7,6 +7,8 @@
+ #include "mb/common/sidebar_policy.h"
+ 
+ #if BUILDFLAG(IS_LINUX)
++#include "mb/browser/browser_config_gate.h"
++#include "mb/browser/runtime_shortcuts.h"
+ #include "mb/ui/sidebar/sidebar_view.h"
+ #endif
+ 
+@@ -933,5 +935,11 @@
+   toolbar_ = top_container_->AddChildView(
+       std::make_unique<ToolbarView>(browser_.get(), this));
++#if BUILDFLAG(IS_LINUX)
++  if (browser_->is_type_normal()) {
++    if (const auto* runtime = mb::GetProcessRuntimeConfig())
++      mb_top_bar_visible_ = runtime->config.ui.top_bar_visible;
++  }
++#endif
+ 
+   top_container_separator_ = top_container_->AddChildView(
+       ContentsSeparator::CreateContentsSeparator());
+@@ -4818,6 +4826,18 @@
+     did_first_layout_while_top_controls_are_sliding_ = false;
+   }
+ 
++#if BUILDFLAG(IS_LINUX)
++  if (browser_->is_type_normal()) {
++    if (!mb_top_bar_visible_) {
++      if (const auto* runtime = mb::GetProcessRuntimeConfig())
++        mb_top_bar_visible_ = runtime->config.ui.top_bar_visible;
++    }
++    const bool visible = mb_top_bar_visible_.value_or(true);
++    toolbar_->SetVisible(visible);
++    top_container_separator_->SetVisible(visible);
++  }
++#endif
++
+   LayoutSuperclass<views::View>(this);
+ 
+   // TODO(jamescook): Why was this in the middle of layout code?
+@@ -5174,6 +5194,38 @@
+     return true;
+   }
+ 
++#if BUILDFLAG(IS_LINUX)
++  if (browser_->is_type_normal()) {
++    if (const auto action = mb::FindRuntimeUiAction(accelerator)) {
++      switch (*action) {
++        case mb::RuntimeUiAction::kToggleTopBar: {
++          const bool visible = !mb_top_bar_visible_.value_or(
++              toolbar_->GetVisible());
++          mb_top_bar_visible_ = visible;
++          toolbar_->SetVisible(visible);
++          top_container_separator_->SetVisible(visible);
++          InvalidateLayout();
++          return true;
++        }
++        case mb::RuntimeUiAction::kToggleTabBar: {
++          if (!vertical_tab_strip_region_view_)
++            return false;
++          const bool visible = !vertical_tab_strip_region_view_->GetVisible();
++          vertical_tab_strip_region_view_->SetVisible(visible);
++          if (vertical_tab_strip_background_blur_backdrop_)
++            vertical_tab_strip_background_blur_backdrop_->SetVisible(visible);
++          if (vertical_tab_strip_top_corner_)
++            vertical_tab_strip_top_corner_->SetVisible(visible);
++          if (vertical_tab_strip_bottom_corner_)
++            vertical_tab_strip_bottom_corner_->SetVisible(visible);
++          InvalidateLayout();
++          return true;
++        }
++      }
++    }
++  }
++#endif
++
+   int command_id;
+   // Though AcceleratorManager should not send unknown |accelerator| to us, it's
+   // still possible the command cannot be executed now.
+@@ -5594,6 +5646,10 @@
+ #endif
+ 
+     ui::Accelerator accelerator(entry.keycode, entry.modifiers);
++#if BUILDFLAG(IS_LINUX)
++    if (browser_->is_type_normal() && mb::FindRuntimeUiAction(accelerator))
++      continue;
++#endif
+     accelerator_table_[accelerator] = entry.command_id;
+ 
+     // Also register with the focus manager.
+@@ -5601,6 +5657,15 @@
+         accelerator, ui::AcceleratorManager::kNormalPriority, this);
+   }
+ 
++#if BUILDFLAG(IS_LINUX)
++  if (browser_->is_type_normal()) {
++    for (const auto& shortcut : mb::GetRuntimeShortcuts()) {
++      focus_manager->RegisterAccelerator(
++          shortcut.accelerator, ui::AcceleratorManager::kNormalPriority, this);
++    }
++  }
++#endif
++
+   // Register the Esc accelerators (both press and release) to ensure they are
+   // sent to the ExclusiveAccessManager for press-and-hold fullscreen exit.
+   ui::Accelerator escape_pressed(ui::VKEY_ESCAPE, ui::EF_NONE,
+diff --git a/chrome/browser/ui/views/frame/browser_view.h b/chrome/browser/ui/views/frame/browser_view.h
+--- a/chrome/browser/ui/views/frame/browser_view.h
++++ b/chrome/browser/ui/views/frame/browser_view.h
+@@ -1257,6 +1257,9 @@
+   // True if we have already been initialized.
+   bool initialized_ = false;
+ 
++  // Product-owned visibility state enforced by layout and changed by shortcut.
++  std::optional<bool> mb_top_bar_visible_;
++
+   // True if layout should be suppressed (used during teardown).
+   bool suppress_layout_for_teardown_ = false;
+
+diff --git a/chrome/browser/ui/BUILD.gn b/chrome/browser/ui/BUILD.gn
+--- a/chrome/browser/ui/BUILD.gn
++++ b/chrome/browser/ui/BUILD.gn
+@@ -5265,6 +5265,7 @@
+       "//mb/ui/sidebar/sidebar_view.h",
+     ]
+     deps += [ "//mb:branding" ]
++    deps += [ "//mb:runtime_shortcuts" ]
+   }
+ }
+ 

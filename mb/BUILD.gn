@@ -72,6 +72,18 @@ source_set("product_core") {
 }
 
 if (is_linux) {
+  source_set("runtime_shortcuts") {
+    sources = [
+      "browser/runtime_shortcuts.cc",
+      "browser/runtime_shortcuts.h",
+    ]
+    public = [ "browser/runtime_shortcuts.h" ]
+    public_deps = [ "//ui/base" ]
+    deps = [
+      ":browser_config_gate",
+      "//ui/events",
+    ]
+  }
   source_set("runtime_ui_actions") {
     public = [ "browser/runtime_ui_actions.h" ]
     public_deps = [ ":browser_config_gate", "//url" ]

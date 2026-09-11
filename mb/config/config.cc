@@ -85,6 +85,37 @@ bool IsHexColor(std::string_view color) {
   });
 }
 
+bool IsShortcut(std::string_view shortcut) {
+  if (shortcut.empty())
+    return true;
+  bool control = false;
+  bool alt = false;
+  bool shift = false;
+  bool key = false;
+  while (!shortcut.empty()) {
+    const std::size_t separator = shortcut.find('+');
+    const std::string_view token = shortcut.substr(0, separator);
+    if (token == "Ctrl" && !control && !key)
+      control = true;
+    else if (token == "Alt" && !alt && !key)
+      alt = true;
+    else if (token == "Shift" && !shift && !key)
+      shift = true;
+    else if (!key && token.size() == 1 &&
+             ((token[0] >= 'A' && token[0] <= 'Z') ||
+              (token[0] >= '0' && token[0] <= '9')))
+      key = true;
+    else
+      return false;
+    if (separator == std::string_view::npos)
+      break;
+    shortcut.remove_prefix(separator + 1);
+    if (shortcut.empty())
+      return false;
+  }
+  return key && (control || alt || shift);
+}
+
 bool IsStartupUrl(std::string_view url) {
   if (url.empty() || HasControl(url))
     return false;
@@ -221,7 +252,7 @@ void ParseUi(ParseConfigResult& result,
              UiConfig& ui) {
   CheckUnknownKeys(result, filename, table, "ui",
                    {"tabs_position", "sidebar_width", "sidebar_collapsed",
-                    "show_tab_close_buttons", "theme"});
+                    "show_tab_close_buttons", "top_bar_visible", "theme"});
   if (const std::string* value =
           OptionalString(result, filename, table, "tabs_position", "ui.tabs_position")) {
     if (*value != "left")
@@ -246,6 +277,11 @@ void ParseUi(ParseConfigResult& result,
                                            "ui.show_tab_close_buttons")) {
     ui.show_tab_close_buttons = *value;
   }
+  if (const bool* value = OptionalBoolean(result, filename, table,
+                                           "top_bar_visible",
+                                           "ui.top_bar_visible")) {
+    ui.top_bar_visible = *value;
+  }
   if (const std::string* value = OptionalString(result, filename, table, "theme", "ui.theme")) {
     if (*value == "system")
       ui.theme = Theme::kSystem;
@@ -256,6 +292,35 @@ void ParseUi(ParseConfigResult& result,
     else
       AddError(result, filename, "ui.theme", "must be \"system\", \"light\", or \"dark\"",
                LineOf(*table.get("theme")));
+  }
+}
+
+void ParseKeybindings(ParseConfigResult& result,
+                      std::string_view filename,
+                      const toml::table& table,
+                      KeybindingsConfig& keybindings) {
+  CheckUnknownKeys(result, filename, table, "keybindings",
+                   {"toggle_top_bar", "toggle_tab_bar"});
+  const auto parse = [&](std::string_view key, std::string& destination) {
+    const std::string full_key = "keybindings." + std::string(key);
+    if (const std::string* value =
+            OptionalString(result, filename, table, key, full_key)) {
+      if (!IsShortcut(*value)) {
+        AddError(result, filename, full_key,
+                 "must be empty (disabled) or use Ctrl/Alt/Shift plus one A-Z or 0-9 key",
+                 LineOf(*table.get(key)));
+      } else {
+        destination = *value;
+      }
+    }
+  };
+  parse("toggle_top_bar", keybindings.toggle_top_bar);
+  parse("toggle_tab_bar", keybindings.toggle_tab_bar);
+  if (!keybindings.toggle_top_bar.empty() &&
+      keybindings.toggle_top_bar == keybindings.toggle_tab_bar) {
+    AddError(result, filename, "keybindings.toggle_tab_bar",
+             "must not conflict with keybindings.toggle_top_bar",
+             LineOf(*table.get("toggle_tab_bar")));
   }
 }
 
@@ -362,7 +427,9 @@ ParseConfigResult ParseConfig(std::string_view text, std::string_view filename) 
   }
 
   const toml::table& root = parsed.table();
-  CheckUnknownKeys(result, filename, root, "", {"schema_version", "ui", "app", "environments"});
+  CheckUnknownKeys(result, filename, root, "",
+                   {"schema_version", "ui", "keybindings", "app",
+                    "environments"});
   Config config;
 
   const toml::node* version_node = root.get("schema_version");
@@ -378,6 +445,10 @@ ParseConfigResult ParseConfig(std::string_view text, std::string_view filename) 
 
   if (const toml::table* ui = OptionalTable(result, filename, root, "ui"))
     ParseUi(result, filename, *ui, config.ui);
+  if (const toml::table* keybindings =
+          OptionalTable(result, filename, root, "keybindings")) {
+    ParseKeybindings(result, filename, *keybindings, config.keybindings);
+  }
   if (const toml::table* app = OptionalTable(result, filename, root, "app"))
     ParseApp(result, filename, *app, config.app);
 

@@ -29,7 +29,12 @@ tabs_position = "left"
 sidebar_width = 280
 sidebar_collapsed = false
 show_tab_close_buttons = true
+top_bar_visible = true
 theme = "system"
+
+[keybindings]
+toggle_top_bar = "Alt+K"
+toggle_tab_bar = "Alt+H"
 
 [app]
 default_environment = "personal"
@@ -41,18 +46,27 @@ accent_color = "#336699"
 startup_urls = ["https://example.invalid", "about:blank"]
 ```
 
-Only `schema_version`, `ui`, `app`, and `environments` are permitted at the
+Only `schema_version`, `ui`, `keybindings`, `app`, and `environments` are permitted at the
 root. `schema_version = 1` is required. Unknown keys are errors in every table,
 which also rejects secret, command, or arbitrary extension fields.
 
 `ui` is optional and defaults to `tabs_position = "left"`, `sidebar_width =
-280`, `sidebar_collapsed = false`, `show_tab_close_buttons = true`, and `theme
-= "system"`. `tabs_position` only permits `"left"`; `sidebar_width` must be an
+280`, `sidebar_collapsed = false`, `show_tab_close_buttons = true`,
+`top_bar_visible = true`, and `theme = "system"`. `top_bar_visible` controls
+the initial visibility of the navigation toolbar containing the omnibox.
+`tabs_position` only permits `"left"`; `sidebar_width` must be an
 integer from 126 through 400; and `theme` is `"system"`, `"light"`, or
 `"dark"`.
 
 `app` is optional. `default_environment` defaults to `"personal"` and must
 name one configured environment. `restore_last_environment` defaults to false.
+
+`keybindings` is optional. `toggle_top_bar` defaults to `"Alt+K"` and
+`toggle_tab_bar` defaults to `"Alt+H"`. Set either to an empty string to disable
+that action. Shortcuts use canonical, case-sensitive modifier names followed
+by one `A`–`Z` or `0`–`9` key, such as `"Ctrl+Shift+L"`. Duplicate bindings are
+rejected. Product bindings take precedence over Chromium defaults; choosing
+`Ctrl+L`, for example, replaces its normal focus-location behavior.
 
 Each environment is a table under `environments`. Its name must match
 `[A-Za-z0-9][A-Za-z0-9_-]{0,63}`. There may be at most 256 environments.

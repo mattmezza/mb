@@ -1,0 +1,38 @@
+diff --git a/chrome/browser/ui/startup/infobar_utils.cc b/chrome/browser/ui/startup/infobar_utils.cc
+--- a/chrome/browser/ui/startup/infobar_utils.cc
++++ b/chrome/browser/ui/startup/infobar_utils.cc
+@@ -9,5 +9,9 @@
+ #include "build/branding_buildflags.h"
+ #include "build/buildflag.h"
++
++#if BUILDFLAG(IS_LINUX)
++#include "mb/browser/browser_config_gate.h"
++#endif
+ #include "chrome/browser/browser_process.h"
+ #include "chrome/browser/obsolete_system/obsolete_system.h"
+ #include "chrome/browser/profiles/profile.h"
+@@ -185,7 +189,12 @@
+   infobars::ContentInfoBarManager* infobar_manager =
+       infobars::ContentInfoBarManager::FromWebContents(web_contents);
+ 
+-  if (!google_apis::HasAPIKeyConfigured()) {
++  bool show_missing_api_keys = !google_apis::HasAPIKeyConfigured();
++#if BUILDFLAG(IS_LINUX)
++  // This unbranded product intentionally ships without Google credentials.
++  show_missing_api_keys &= !mb::GetProcessRuntimeConfig();
++#endif
++  if (show_missing_api_keys) {
+     GoogleApiKeysInfoBarDelegate::Create(infobar_manager);
+   }
+ 
+diff --git a/chrome/browser/ui/startup/BUILD.gn b/chrome/browser/ui/startup/BUILD.gn
+--- a/chrome/browser/ui/startup/BUILD.gn
++++ b/chrome/browser/ui/startup/BUILD.gn
+@@ -371,6 +371,7 @@
+   }
+   if (is_linux) {
+     deps += [ "//mb:runtime_ui_config" ]
++    deps += [ "//mb:browser_config_gate" ]
+   }
+   if (is_linux) {
+     deps += [ "//mb:runtime_ui_actions" ]

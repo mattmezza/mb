@@ -5,6 +5,7 @@
 #include "base/command_line.h"
 #include "base/files/file_util.h"
 #include "base/test/run_until.h"
+#include "mb/browser/browser_config_gate.h"
 #include "chrome/browser/prefs/session_startup_pref.h"
 #include "chrome/browser/profiles/profile.h"
 #include "chrome/browser/ui/browser.h"
@@ -14,8 +15,10 @@
 #include "chrome/browser/ui/startup/startup_browser_creator.h"
 #include "chrome/browser/ui/tabs/tab_strip_model.h"
 #include "chrome/browser/ui/views/frame/browser_view.h"
+#include "chrome/browser/ui/views/frame/vertical_tab_strip_region_view.h"
 #include "chrome/browser/ui/views/tabs/common/tab_view.h"
 #include "chrome/browser/ui/views/tabs/tab/tab_close_button.h"
+#include "chrome/browser/ui/views/toolbar/toolbar_view.h"
 #include "chrome/common/pref_names.h"
 #include "chrome/test/base/in_process_browser_test.h"
 #include "chrome/test/base/ui_test_utils.h"
@@ -26,6 +29,9 @@
 #include "testing/gtest/include/gtest/gtest.h"
 #include "ui/views/view.h"
 #include "ui/views/view_utils.h"
+#include "ui/base/accelerators/accelerator.h"
+#include "ui/events/event_constants.h"
+#include "ui/events/keycodes/keyboard_codes.h"
 #include "url/gurl.h"
 namespace {
 constexpr char kConfiguredOne[] = "about:blank#configured-one";
@@ -88,7 +94,10 @@ class MbRuntimeUiActionsBrowserTest : public InProcessBrowserTest {
             std::string("schema_version = 1\n[ui]\nsidebar_width = 300\n") +
                 "sidebar_collapsed = false\nshow_tab_close_buttons = " +
                 (show_close ? "true" : "false") +
-                "\n[environments.personal]\ndata_directory = '.'\n" +
+                "\ntop_bar_visible = true" +
+                "\n[keybindings]\ntoggle_top_bar = 'Ctrl+L'\n" +
+                "toggle_tab_bar = 'Alt+H'\n" +
+                "[environments.personal]\ndata_directory = '.'\n" +
                 "startup_urls = ['about:blank#configured-one', "
                 "'about:blank#configured-two']\n")) {
       return false;
@@ -126,6 +135,27 @@ class MbRuntimeUiActionsBrowserTest : public InProcessBrowserTest {
     }));
   }
 };
+IN_PROC_BROWSER_TEST_F(MbRuntimeUiActionsBrowserTest,
+                       VisibilityAndConfiguredShortcuts) {
+  auto& view = browser()->GetBrowserView();
+  ASSERT_NE(mb::GetProcessRuntimeConfig(), nullptr);
+  EXPECT_TRUE(mb::GetProcessRuntimeConfig()->config.ui.top_bar_visible);
+  ASSERT_NE(view.vertical_tab_strip_region_view_for_testing(), nullptr);
+  ASSERT_TRUE(view.vertical_tab_strip_region_view_for_testing()->GetVisible());
+
+  EXPECT_TRUE(view.AcceleratorPressed(
+      ui::Accelerator(ui::VKEY_L, ui::EF_CONTROL_DOWN)));
+  EXPECT_FALSE(view.toolbar()->GetVisible());
+  EXPECT_TRUE(view.AcceleratorPressed(
+      ui::Accelerator(ui::VKEY_L, ui::EF_CONTROL_DOWN)));
+  EXPECT_TRUE(view.toolbar()->GetVisible());
+  EXPECT_TRUE(view.AcceleratorPressed(
+      ui::Accelerator(ui::VKEY_H, ui::EF_ALT_DOWN)));
+  EXPECT_FALSE(view.vertical_tab_strip_region_view_for_testing()->GetVisible());
+  EXPECT_TRUE(view.AcceleratorPressed(
+      ui::Accelerator(ui::VKEY_H, ui::EF_ALT_DOWN)));
+  EXPECT_TRUE(view.vertical_tab_strip_region_view_for_testing()->GetVisible());
+}
 IN_PROC_BROWSER_TEST_F(MbRuntimeUiActionsBrowserTest,
                        ConfiguredUrlsAndHiddenCloseButton) {
   ExpectConfiguredUrls();

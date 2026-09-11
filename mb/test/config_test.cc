@@ -22,10 +22,50 @@ TEST(ConfigTest, ParsesValidDefaults) {
   EXPECT_EQ(result.config->ui.sidebar_width, 280);
   EXPECT_FALSE(result.config->ui.sidebar_collapsed);
   EXPECT_TRUE(result.config->ui.show_tab_close_buttons);
+  EXPECT_TRUE(result.config->ui.top_bar_visible);
+  EXPECT_EQ(result.config->keybindings.toggle_top_bar, "Alt+K");
+  EXPECT_EQ(result.config->keybindings.toggle_tab_bar, "Alt+H");
   EXPECT_EQ(result.config->ui.theme, Theme::kSystem);
   EXPECT_EQ(result.config->app.default_environment, "personal");
   ASSERT_EQ(result.config->environments.size(), 1u);
   EXPECT_EQ(result.config->environments[0].data_directory, "~/literal-$HOME");
+}
+
+TEST(ConfigTest, ParsesAndValidatesUiVisibilityAndKeybindings) {
+  const auto valid = ParseConfig(R"toml(
+schema_version = 1
+[ui]
+top_bar_visible = false
+[keybindings]
+toggle_top_bar = "Ctrl+L"
+toggle_tab_bar = ""
+[environments.personal]
+data_directory = "/tmp/personal"
+)toml", "keys.toml");
+  ASSERT_TRUE(valid.ok());
+  EXPECT_FALSE(valid.config->ui.top_bar_visible);
+  EXPECT_EQ(valid.config->keybindings.toggle_top_bar, "Ctrl+L");
+  EXPECT_TRUE(valid.config->keybindings.toggle_tab_bar.empty());
+
+  for (const auto* shortcut : {"K", "ctrl+K", "Ctrl++K", "Ctrl+Escape"}) {
+    const auto invalid = ParseConfig(
+        std::string("schema_version=1\n[keybindings]\ntoggle_top_bar=\"") +
+            shortcut +
+            "\"\n[environments.personal]\ndata_directory=\"/tmp/p\"\n",
+        "keys.toml");
+    EXPECT_FALSE(invalid.ok()) << shortcut;
+  }
+
+  const auto conflict = ParseConfig(R"toml(
+schema_version = 1
+[keybindings]
+toggle_top_bar = "Alt+H"
+toggle_tab_bar = "Alt+H"
+[environments.personal]
+data_directory = "/tmp/personal"
+)toml", "keys.toml");
+  ASSERT_FALSE(conflict.ok());
+  EXPECT_EQ(conflict.errors[0].key, "keybindings.toggle_tab_bar");
 }
 
 TEST(ConfigTest, RejectsDeepDottedKeysBeforeBuildingRecursiveTables) {

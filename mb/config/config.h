@@ -20,7 +20,14 @@ struct UiConfig {
   int sidebar_width = 280;
   bool sidebar_collapsed = false;
   bool show_tab_close_buttons = true;
+  bool top_bar_visible = true;
   Theme theme = Theme::kSystem;
+};
+
+struct KeybindingsConfig {
+  // An empty string disables the action.
+  std::string toggle_top_bar = "Alt+K";
+  std::string toggle_tab_bar = "Alt+H";
 };
 
 struct AppConfig {
@@ -39,6 +46,7 @@ struct EnvironmentConfig {
 struct Config {
   int schema_version = 1;
   UiConfig ui;
+  KeybindingsConfig keybindings;
   AppConfig app;
   std::vector<EnvironmentConfig> environments;
 };
