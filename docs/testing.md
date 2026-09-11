@@ -606,3 +606,31 @@ explicit View* conversion from Chromium raw_ptr children.
 Default XDG checkpoint:73 native +17 companion checks passed115635.362056Z; production115742.544580Z passed. Executable smoke default-config-_82bbob9 verified bootstrap, XDG roots, remembered activation and unchanged selection through private shutdown. Eight configuration negatives passed115834.843829Z. Initial unit tests encountered /tmp quota; their runner now supplies build scratch storage.
 
 MV3 capability and OTR persistence: five browser tests passed in product-browser-tests-20260909T120355.588766Z, build120248.074755Z. Covers unpacked lifecycle, native action popup, service worker/content-script/storage round trips, last-private-window cookie loss and absence of private visits from normal history. Does not yet prove cross-environment persistence or private session-file contents.
+
+## Optimized release and Arch package, 2026-09-11
+
+The non-component optimized build completed successfully in 11h58m with 53,511
+steps. Build receipt:
+`product-build-20260910T104247.448126Z.json`. The executable SHA-256 is
+`7c1e2d8b074d037066ad770be5e1eb9c2ea9bd1fb68516f3f037e93bde2645f3`.
+
+The release binary passed the explicit two-environment lifecycle smoke in
+`two-env-ynp0j2fm` and the nine-check default XDG/remembered-selection smoke in
+`default-config-_efwovxy`. All owned processes exited naturally through native
+POSIX session ending. These runs did not use `--no-sandbox`.
+
+Release-mode C++ and companion tests passed 73 and 17 checks respectively in
+`product-unit-20260911T125917.640304Z`. The complete product browser filter
+passed all 39 executions in
+`product-browser-tests-20260911T125932.943720Z`. The three 100-tab cases took
+14.2s for model/projection, 19.1s for local navigation, and 28.1s for initial
+100-URL startup. These are whole-test elapsed times, not per-activation latency.
+
+The Arch stager's three tests pass. `makepkg` accepted the declared runtime and
+build dependencies and produced
+`mb-browser-0.1.0-1-x86_64.pkg.tar.zst` (248 MiB), SHA-256
+`3fb8cd96d5ad74b0abed297032019a602cb28d0e186e691f30e32bd26ea2e6c7`.
+Archive inspection found 257 payload files, root ownership metadata and mode
+4755 for `opt/mb/chrome-sandbox`; extracting the packaged browser yields the
+same hash as the tested release executable. System installation and its
+root-owned sandbox launch remain pending.

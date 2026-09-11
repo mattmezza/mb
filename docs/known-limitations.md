@@ -1,64 +1,63 @@
 # Known limitations
 
-Updated 2026-09-09. Phase 1 passed: unmodified Chromium built and launched
-under actual Xorg with reviewed navigation, tabs, docked DevTools, sandbox and
-clean exit. A product debug build and its focused GN tests also passed. The
-first product smoke had a post-DevTools navigation timeout; two retries passed.
-The [reviewed product launch](product-baseline-2026-09-08.md) verifies its limited
-scope. This repository does not yet provide the requested daily-driver browser.
-The initial custom sidebar is running; its remaining performance/input checks,
-runtime environment isolation, full extension compatibility, release build and
-Arch packaging remain pending. See the [baseline review](upstream-baseline-2026-09-08.md)
-for the upstream data-URL debug assertion. F12 passed the first sidebar Xorg
-input check; see [sidebar review](sidebar-baseline-2026-09-08.md). Ctrl+T now
-passes the [local NTP gate](local-new-tab.md). Inherited omnibox AI Mode hints
-and unsupported new-tab customization controls are now omitted on Linux;
-focused cleanup/navigation and nine NTP/sidebar regression cases pass. Broader
-Google-dependent background service behavior remains inherited and unverified.
+Updated 2026-09-11. The optimized browser and Arch package now build, and the
+release binary has passed explicit two-environment and default-XDG lifecycle
+smoke tests under Xorg. Daily-driver alpha acceptance remains incomplete until
+the installed package and the remaining physical desktop checks pass.
 
-The compiled configuration companion works independently. Its parser and
-environment-directory core have focused tests, but browser startup does not
-yet consume them. Directory validation and secure creation do not establish
-cookie, history, extension, or process-lock isolation; those require the
-planned Chromium integration and browser tests.
+## Distribution and platform
 
-Branding generators produce native inputs and an original temporary icon.
-These resources are linked into the successfully tested branded browser. Changed translated messages
-fall back to English, so the initial product will contain mixed-language UI
-until product translations are available. The temporary wordmark slots use
-the original icon without lettering.
+- Arch Linux x86-64 under Xorg is the only tested target. Wayland, Windows,
+  macOS and mobile platforms are outside the first release.
+- The Arch archive is built and inspected, including root ownership metadata and
+  mode 4755 for `chrome-sandbox`. It has not yet been installed system-wide, so
+  the installed setuid fallback has not been exercised.
+- Updates use package replacement. There is no automatic updater.
+- The active X11 window manager has repeatedly defeated synthetic focus and
+  close events. Clipboard, IME, file picker, HiDPI and multi-monitor behavior
+  therefore require a short physical-input pass.
 
-The pinned unbranded upstream arguments retain Chromium's codec defaults:
-`proprietary_codecs=false` and `ffmpeg_branding="Chromium"`. Proprietary codec
-and DRM playback support is not promised. No unofficial Google API keys are
-included. Google-dependent services and Chrome Web Store installation remain
-unverified; the focused unpacked MV3 NTP override/disable test passes, while the broader
-extension capability suite remains pending.
+## Browser services
 
-Only Arch Linux, x86-64, under Xorg is the initial target. Wayland, Windows,
-macOS, automatic updates, accounts, and cloud synchronization are outside the
-first release scope. Release updates will use package replacement.
+- Unpacked Manifest V3 installation, enable/disable/removal, content scripts,
+  action popups, background workers and extension storage pass focused tests.
+  Chrome Web Store installation and complete extension compatibility are not
+  claimed. No unofficial Google API keys are included.
+- Chromium DevTools commands, page-context inspection, normal/private windows,
+  and docked/undocked creation pass focused tests. Every DevTools panel has not
+  been exhaustively tested.
+- The unbranded build retains Chromium codec defaults
+  (`proprietary_codecs=false`, `ffmpeg_branding="Chromium"`). Proprietary media
+  codecs and DRM playback are not promised.
+- Availability of Safe Browsing and other Google-backed services follows
+  unbranded Chromium. No service restriction is bypassed.
+- Translated product-specific strings fall back to English until translations
+  are supplied.
 
-Daily-driver acceptance remains incomplete. Standalone test
-success is recorded separately from browser capability evidence in
-[testing](testing.md).
+## Configuration and environments
 
-The 100-tab debug correctness case passes, but responsiveness does not yet pass:
-loaded selection plus the test's idle/layout wait measured 298–524 ms, and bulk
-startup of 100 local pages is visibly slow. See [measured scope](testing.md).
-Four native DevTools browser tests pass; full panel and extension-debugging
-coverage remains pending.
+- `personal` and `work` roots pass cross-restart isolation checks for cookies,
+  history, installed extensions and extension storage. Chromium's normal
+  user-data-root locking remains authoritative.
+- Genuine off-the-record profiles pass cookie and normal-history persistence
+  checks. Extension incognito access still follows Chromium's native opt-in
+  controls; the permission UI needs final manual verification.
+- Remembered environment selection is stored only for the default XDG
+  configuration. An explicitly supplied `--config` remains stateless.
+- Synchronous initial session restoration receives configured sidebar state.
+  Additional profiles and asynchronous `kNo` restore paths are not forcefully
+  overwritten after the initial restore completes.
 
-Production debug bulk startup with 100 local data pages also failed its loading
-review: a network-service restart/rebind was logged and most pages stayed
-Loading for minutes; individually reloaded first/last pages rendered. Cause is
-unresolved. Evidence: `sidebar-input-20260908T214054.271075Z/review.json`.
-The same run closed normally with exit 0. No network or sandbox changes were
-made to bypass it.
+## UI and performance
 
-The after-readiness bulk diagnostic loaded all 100 local pages without an
-observed network-service exit. It does not reproduce initial process startup;
-a separate initial-argument diagnostic is prepared but not yet compiled.
-Debug/release tooling is implemented and unit-tested, but no optimized build
-or installed Arch package has passed. Experimental use should keep a separate
-test user-data directory and close all windows before rebuilding shared output.
+- The sidebar uses Chromium's `TabStripModel` and native vertical-tab views.
+  Correctness tests cover selection, close, reorder, pins, groups, scrolling,
+  state indicators, accessibility, collapse and resize behavior.
+- The 100-tab debug activation measurements are slow and are not representative
+  of optimized performance. Optimized whole-test cases complete in 14–28s, but
+  no per-interaction latency benchmark or long-lived memory study exists yet.
+- The omnibox and navigation controls intentionally retain Chromium's current
+  layout while vertical tabs stabilize.
+
+See [testing](testing.md) for exact evidence and [security](security.md) for
+preserved Chromium security boundaries.

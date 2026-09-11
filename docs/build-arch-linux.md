@@ -149,11 +149,12 @@ python3 mb/tools/product.py test --profile release --jobs 4
 python3 mb/tools/product.py test-build --profile release --jobs 4 --targets mb:mb_browser_tests
 ```
 
-These are implemented commands, not a record of a successful release build.
-The optimized output has not yet been generated, compiled, or launched. Check
-free space and RAM before starting; the separate output's peak storage is not
-measured. Schedule the full compilation when the target computer is available.
-The tool's 25 GiB entry reserve is not continuous storage monitoring.
+The optimized build completed successfully on 2026-09-10 in 11h58m using 12
+local jobs. Its receipt is
+`.build/logs/product-build-20260910T104247.448126Z.json`; the release binary
+SHA-256 is `7c1e2d8b074d037066ad770be5e1eb9c2ea9bd1fb68516f3f037e93bde2645f3`.
+The output occupied about 12 GiB after the additional test/helper targets were
+built. The tool's 25 GiB entry reserve is not continuous storage monitoring.
 
 Before staging, generation or compilation, the product tool scans same-user
 `/proc/<pid>/exe` links for processes using either output. It refuses to mutate
@@ -168,9 +169,9 @@ binary from that profile and reject mixed debug/release receipts. Older debug
 receipts remain supported only with the exact established debug arguments.
 Run smoke and browser tests with the successful matching receipts as described
 in [product integration](product-integration.md). Omitting `--profile` retains
-the debug default. Arch packaging remains pending.
+the debug default.
 
-## Product packaging requirements under preparation
+## Arch package
 
 Chromium's development defaults set `generate_about_credits = is_official_build`.
 Consequently the retained unmodified debug baseline used a sample credits page.
@@ -182,26 +183,37 @@ required for the product debug build as well as the release build; it does not
 require enabling Google branding. The implementation seam is
 `components/resources/BUILD.gn`, including its downstream notice-directory hook.
 
-The completed package must use an explicit payload inventory derived from the
-effective GN settings and upstream Linux installer rules. The current debug
-target's broad `runtime_deps` list includes thousands of generated/tool/test
-inputs, so it is not an install manifest. Required browser resources, locales,
-ICU/V8 data, Crashpad, enabled ANGLE/Vulkan/SwiftShader libraries and component
-preloads must be accounted for. A component debug distribution also needs its
-actual private ELF dependency closure and dynamically loaded libraries. Keep
-those private libraries with the browser rather than installing them globally.
+The checked-in [`PKGBUILD`](../packaging/arch/PKGBUILD) calls a receipt-bound
+stager. The stager verifies the current integration and release binary hash,
+reads effective GN settings, and includes the required resources, locales,
+ICU/V8 data, Crashpad, management helper, enabled Vulkan/SwiftShader files,
+preloads, desktop metadata, icons, license and generated credits. Missing
+enabled payloads fail packaging.
 
-The sandbox target is a separate packaging prerequisite: build `chrome_sandbox`
-and install it beside the browser as `chrome-sandbox`. Chromium's packaged
-setuid fallback requires root ownership and mode 4755; package installation is
-the privileged step, not the build agent. Renaming the browser executable does
-not rename this helper's lookup path. Validate its dependencies and sandboxed
-runtime after installation. Do not work around a missing helper by disabling
-the sandbox.
+The management helper is an explicit incremental target:
 
-Preserve upstream internal resource filenames when changing the executable's
-identity. Staging must fail when a feature is enabled but its required payload
-is absent, rather than silently omitting it. The eventual tested PKGBUILD,
-release arguments, artifact inventory and exact commands remain Phase 6 work.
-See [upstream maintenance](upstream-updates.md) for the update procedure and its
-current validation limits.
+```sh
+python3 mb/tools/product.py test-build --profile release --jobs 12 \
+  --targets chrome/browser/enterprise/connectors/device_trust/key_management/installer/management_service:chrome_management_service
+```
+
+Build the Arch archive without root privileges:
+
+```sh
+MB_REPO_ROOT="$PWD" \
+MB_RELEASE_OUTPUT="$PWD/.build/chromium/src/out/mb-release" \
+MB_RELEASE_RECEIPT="$PWD/.build/logs/product-build-20260910T104247.448126Z.json" \
+PKGDEST="$PWD/.build/packages" \
+makepkg --dir packaging/arch --force --cleanbuild --clean
+```
+
+If the installed `makepkg` does not support `--dir`, run the same command from
+`packaging/arch`. The verified archive is
+`.build/packages/mb-browser-0.1.0-1-x86_64.pkg.tar.zst` (248 MiB). Its entries
+are root-owned and `opt/mb/chrome-sandbox` has mode 4755. Installing it requires
+root privileges; use package replacement for updates.
+
+The archive has been built and inspected without root. A final installed-package
+launch must still confirm the root ownership/setuid sandbox behavior on the
+target machine. Do not bypass a missing or misconfigured sandbox with
+`--no-sandbox`. See [upstream maintenance](upstream-updates.md) for updates.

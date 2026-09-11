@@ -1,49 +1,51 @@
 # Implementation status
 
-Updated 2026-09-10, Europe/Zurich. Current phase: 5/6; daily-driver alpha incomplete.
+Updated 2026-09-11, Europe/Zurich. Current phase: 6; daily-driver alpha pending
+installed-package and physical desktop verification.
 
 ## Verified
 
 - Chromium 152.0.7977.82 is pinned at `d04cdb24d67b081f6cf80200ffc5233f44b61109`.
-- The upstream and product debug builds launch under Xorg with Chromium's sandbox enabled.
-- Central branding, native vertical tabs, strict TOML configuration, XDG defaults,
-  isolated environment roots, startup URLs, sidebar preferences, genuine off-the-record
-  profiles, MV3 extensions, and DevTools integration are compiled and tested.
-- 73 native product tests and 17 companion checks passed in the latest full core run.
-- Five MV3/incognito browser tests passed in
-  `.build/test-evidence/product-browser-tests-20260909T120355.588766Z`.
-- Cross-restart `personal`/`work` isolation for cookies, history, installed extensions,
-  and extension storage passed in
-  `.build/test-evidence/product-browser-tests-20260910T102805.399597Z`.
-- Latest focused build receipt:
-  `.build/logs/product-test-build-20260910T102637.730251Z.json`.
-- Latest production debug build receipt:
-  `.build/logs/product-build-20260909T115742.544580Z.json`.
+- The optimized non-component build completed in 11h58m:
+  `.build/logs/product-build-20260910T104247.448126Z.json`.
+- Release binary SHA-256:
+  `7c1e2d8b074d037066ad770be5e1eb9c2ea9bd1fb68516f3f037e93bde2645f3`.
+- Release-mode 73 native tests and 17 companion checks passed:
+  `.build/test-evidence/product-unit-20260911T125917.640304Z`.
+- All 39 optimized browser-test executions passed:
+  `.build/test-evidence/product-browser-tests-20260911T125932.943720Z`.
+- Optimized 100-tab cases completed in 14.2s, 19.1s and 28.1s.
+- Release environment/XDG smokes passed in `two-env-ynp0j2fm` and
+  `default-config-_efwovxy`.
+- Arch package staging tests pass. The 248 MiB archive contains 257 payload
+  files, root-owned metadata, sandbox mode 4755, all locales, generated credits,
+  desktop metadata and icons:
+  `.build/packages/mb-browser-0.1.0-1-x86_64.pkg.tar.zst`.
+- Package SHA-256:
+  `3fb8cd96d5ad74b0abed297032019a602cb28d0e186e691f30e32bd26ea2e6c7`.
 
 ## Pending
 
-1. Integrate and test the Arch packaging definition.
-2. Generate and compile `out/mb-release`; run release smoke and 100-tab checks.
-3. Complete targeted browser-capability checks and record physical Xorg checks that
-   require reliable user input.
-4. Reconcile final documentation, known limitations, and upstream-update rehearsal.
-5. Push the verified commits to GitHub.
+1. Install the local Arch package and launch it under X11 with the sandbox enabled.
+2. Complete physical checks for clipboard, IME, file picker, downloads,
+   notifications, media, HiDPI/multiple monitors and default-browser invocation.
+3. Manually check bookmarks, permissions, passwords, session restoration,
+   extension incognito permission UI and the main DevTools panels.
+4. Finish the upstream-update rehearsal and final acceptance report.
 
 ## Limits
 
-- About 75 GiB was free at the last check, below the preferred 100 GiB Chromium margin.
-  No external blocker is active; release-build disk use remains to be measured.
-- The current window manager does not reliably accept synthetic focus/input, so physical
-  clipboard, IME, multi-monitor, and file-picker checks still need manual confirmation.
-- Explicit `--config` selection is intentionally stateless today; remembered environment
-  selection is implemented for the default XDG configuration path.
-- Debug 100-tab activation remains slow; release performance is not measured yet.
-- Unrelated root `test/` and `.tmux-session` are untouched.
+- Chrome Web Store and complete extension compatibility are not claimed.
+- Proprietary codecs/DRM are unavailable with the retained Chromium codec build.
+- Explicit `--config` selection is stateless; remembered selection uses the
+  default XDG configuration.
+- Unrelated root `test/` and `.tmux-session` remain untouched.
 
 ## Continue
 
+The remaining automated work is documentation/update validation. Installing the
+package is the next privileged step:
+
 ```sh
-python3 mb/tools/product.py prepare
-python3 mb/tools/product.py gen --profile release
-python3 mb/tools/product.py build --profile release
+sudo pacman -U /home/matteo/dev/mb/.build/packages/mb-browser-0.1.0-1-x86_64.pkg.tar.zst
 ```

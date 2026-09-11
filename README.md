@@ -1,7 +1,8 @@
 # Browser fork workspace
 
-This repository is preparing a direct Chromium fork for Linux/X11. A product
-browser build, focused GN tests and scoped sandboxed Xorg launch have passed.
+This repository contains a direct Chromium fork for Linux/X11. Debug and
+optimized product builds, focused native tests, isolated-environment Xorg
+launches, and an Arch package build have passed.
 The product's temporary identity is centralized in [one
 branding manifest](mb/branding.toml); its tested generator prepares build inputs
 separately from the unmodified Chromium checkout.
@@ -20,22 +21,21 @@ The existing `.tmux-session` file is user-owned and has not been changed.
 
 The pinned, unmodified source built and passed a sandboxed launch on the actual
 Xorg session; see the [baseline review](docs/upstream-baseline-2026-09-08.md).
-Product branding integration has produced a successful debug build and focused
-test receipts and a [reviewed product launch](docs/product-baseline-2026-09-08.md).
-The initial native-sidebar Xorg checkpoint passed basic tab inputs,
+Product branding integration has produced successful debug and release builds,
+focused test receipts and a [reviewed product launch](docs/product-baseline-2026-09-08.md).
+The native-sidebar Xorg checkpoint passed basic tab inputs,
 pinning/reorder/groups, resize/collapse and F12. Focused DevTools routes and
-100-tab model correctness passed; the 100-local-page startup/performance review
-failed and its cause remains unresolved. AX name/selection, Return activation and
+100-tab model correctness passed. Optimized 100-tab browser tests complete in
+about 14–28 seconds. AX name/selection, Return activation and
 focus, plus loading/crash/audio checks passed in focused product runs. Expanded
 scale correctness and next-frame checks passed without establishing
 responsiveness. Broader AT-SPI/screen-reader, pointer/mute, browser
-configuration wiring, and remaining native UI cleanup are still pending.
-Release-mode output, package assembly and daily-driver acceptance remain open.
-The full daily-driver acceptance remains pending. Required Chromium licenses,
-notices and credits must accompany any eventual distribution; no distributable
-package is available yet.
+configuration wiring and environment isolation are tested. Physical X11 checks
+and an installed-package smoke remain before daily-driver acceptance.
+The generated Arch package includes Chromium's license and generated third-party
+credits.
 
-The standalone control command is available for development:
+The standalone control command is available:
 
 ```sh
 python3 mb/tools/build_control.py
@@ -43,8 +43,8 @@ python3 mb/tools/build_control.py
 ```
 
 It validates TOML and audits environment paths without creating browser data.
-See [configuration](docs/configuration.md) and [environment paths](docs/environments.md)
-for commands, tests, and current integration limits.
+The browser consumes the same schema at startup. See
+[configuration](docs/configuration.md) and [environment paths](docs/environments.md).
 
 After source bootstrap and hooks, run the standalone product checks with:
 
@@ -61,7 +61,8 @@ candidate without changing source or pins. The [update procedure](docs/upstream-
 records the maintenance gates and work still required to rehearse a full update.
 
 Chromium's source license is retained verbatim in [LICENSE.chromium](LICENSE.chromium).
-Vendored toml++ retains its MIT license and provenance. Binary packages must also
-include generated third-party notices; no package is available yet.
+Vendored toml++ retains its MIT license and provenance. The tested package is
+written beneath `.build/packages/` and includes generated third-party notices.
 
-For hands-on checks of the current debug build, see [experimental testing](docs/experimental-testing.md). Close trial windows before rebuilding.
+For hands-on checks of the release build, see
+[experimental testing](docs/experimental-testing.md). Close trial windows before rebuilding.

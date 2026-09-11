@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- Build and launch the optimized Chromium product under Xorg; pass 73 native,
+  17 companion and 39 browser-test executions in release mode.
+- Verify cross-restart environment isolation for cookies, history, extensions
+  and extension storage, plus genuine off-the-record persistence behavior.
+- Add and test receipt-bound Arch packaging with generated branding, complete
+  locales/resources, upstream credits and the mode-4755 sandbox helper.
+
 - Record Arch/Xorg discovery and phased implementation gates.
 - Pin Chromium Linux stable 152.0.7977.82 and depot_tools by commit.
 - Add dependency preflight and guarded source-fetch tooling.
